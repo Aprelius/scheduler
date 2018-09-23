@@ -6,13 +6,19 @@ namespace Scheduler {
 
     inline bool IsDigit(char c) { return c >= 48 && c <= 57; }
 
+    inline bool IsHex(char c)
+    {
+        return (c >= 97 && c <= 102) || (c >= 65 && c <= 70)
+            || (c >= 48 && c <= 57);
+    }
+
     inline bool IsSpace(char c) { return (c == ' ' || c == '\t' || c == '\n' || c == '\r'); }
 
     inline bool IsLower(char c) { return c >= 97 && c <= 122; }
 
 	inline bool IsUpper(char c) { return c >= 65 && c <= 90; }
 
-    inline static unsigned char ToNibble(char c)
+    inline unsigned char ToNibble(char c)
 	{
 		if (IsDigit(c)) return c - '0';
 		if (IsLower(c)) return c - 'a' + 10;
