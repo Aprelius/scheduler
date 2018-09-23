@@ -55,7 +55,7 @@ namespace Lib {
     public:
 
         /// The destructor.
-        ~Task();
+        virtual ~Task();
 
         /// Add the given task a dependency that must complete executing before
         /// this task may begin. ANy changes to the dependency list may be
