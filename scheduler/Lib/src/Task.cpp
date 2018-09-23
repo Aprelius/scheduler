@@ -76,15 +76,14 @@ Scheduler::Lib::Task* Scheduler::Lib::Task::Depends(Task* task)
 
      // Early check in case the task ID is already linked as a dependency
      // this is to prevent duplicates being added.
-    if (Requires(task)) return this;
-
-    std::shared_ptr<Task> that = task->shared_from_this();
-    m_dependencies.emplace_back(std::move(that));
+    if (Requires(task->Id())) return this;
 
     // Prevent circular dependencies by invalidating this task if
     // a dependency is added which requires it.
-    if (task->Requires(this)) m_valid = false;
+    if (task->Requires(Id())) m_valid = false;
 
+    std::shared_ptr<Task> that = task->shared_from_this();
+    m_dependencies.emplace_back(std::move(that));
     return this;
 }
 
@@ -119,20 +118,30 @@ bool Scheduler::Lib::Task::IsValid() const
 bool Scheduler::Lib::Task::Requires(const Task* task) const
 {
     if (!task) return false;
-    return Requires(task->Id());
+    return Requires(Id(), Id(), task->Id());
 }
 
 bool Scheduler::Lib::Task::Requires(const TaskPtr& task) const
 {
-    return Requires(task->Id());
+    return Requires(Id(), Id(), task->Id());
 }
 
 bool Scheduler::Lib::Task::Requires(const UUID& id) const
 {
+    return Requires(Id(), Id(), id);
+}
+
+bool Scheduler::Lib::Task::Requires(
+    const UUID& start,
+    const UUID& parent,
+    const UUID& id) const
+{
     for (const TaskPtr& task : m_dependencies)
     {
+        if (task->Id() == start) continue;
+        if (task->Id() == parent) continue;
         if (task->Id() == id) return true;
-        if (task->Requires(id)) return true;
+        if (task->Requires(parent, Id(), id)) return true;
     }
     return false;
 }

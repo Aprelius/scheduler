@@ -120,6 +120,8 @@ namespace Lib {
         Task();
         Task(const Clock::time_point& after, const Clock::time_point& before);
 
+        bool Requires(const UUID& start, const UUID& parent, const UUID& id) const;
+
         void SetValid(bool status);
 
     private:
