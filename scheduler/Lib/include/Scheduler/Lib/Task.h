@@ -33,21 +33,24 @@ namespace Lib {
     {
         friend class Scheduler;
 
-        template<typename T>
+        template<typename T, typename... Args>
         friend std::shared_ptr<typename std::enable_if<std::is_base_of<Task, T>::value, T>::type>
-        After(const Clock::time_point& point);
+        After(const Clock::time_point& point, Args&& ...args);
 
-        template<typename T>
+        template<typename T, typename... Args>
         friend std::shared_ptr<typename std::enable_if<std::is_base_of<Task, T>::value, T>::type>
-        Before(const Clock::time_point& point);
+        Before(const Clock::time_point& point, Args&& ...args);
 
-        template<typename T>
+        template<typename T, typename... Args>
         friend std::shared_ptr<typename std::enable_if<std::is_base_of<Task, T>::value, T>::type>
-        Between(const Clock::time_point& after, const Clock::time_point& before);
+        Between(
+            const Clock::time_point& after,
+            const Clock::time_point& before,
+            Args&& ...args);
 
-        template<typename T>
+        template<typename T, typename... Args>
         friend std::shared_ptr<typename std::enable_if<std::is_base_of<Task, T>::value, T>::type>
-        MakeTask();
+        MakeTask(Args&& ...args);
 
     public:
 
@@ -143,39 +146,42 @@ namespace Lib {
     /// Create a task that should not execute after a given time.
     /// It is expected that the time point given be in the future and
     /// creating one in the past will generate a bad task.
-    template<typename T>
+    template<typename T, typename... Args>
     std::shared_ptr<typename std::enable_if<std::is_base_of<Task, T>::value, T>::type>
-    After(const Clock::time_point& point)
+    After(const Clock::time_point& point, Args&& ...args)
     {
-        return std::shared_ptr<T>(new T(Clock::time_point::max(), point));
+        return std::shared_ptr<T>(new T(Clock::time_point::max(), point, std::forward<Args>(args)...));
     }
 
     /// Create a Task that should not execute before a given time.
     /// It is expected that the time point given be in the future and
     /// creating one in the past will generate a bad task.
-    template<typename T>
+    template<typename T, typename... Args>
     std::shared_ptr<typename std::enable_if<std::is_base_of<Task, T>::value, T>::type>
-    Before(const Clock::time_point& point)
+    Before(const Clock::time_point& point, Args&& ...args)
     {
-        return std::shared_ptr<T>(new T(point, Clock::time_point::max()));
+        return std::shared_ptr<T>(new T(point, Clock::time_point::max(), std::forward<Args>(args)...));
     }
 
     /// Create a task that should execute between two given time
     /// points. Both values should follow the rules for the
     /// individual constructors in be in the future or now.
-    template<typename T>
+    template<typename T, typename... Args>
     std::shared_ptr<typename std::enable_if<std::is_base_of<Task, T>::value, T>::type>
-    Between(const Clock::time_point& after, const Clock::time_point& before)
+    Between(
+        const Clock::time_point& after,
+        const Clock::time_point& before,
+        Args&& ...args)
     {
-        return std::shared_ptr<T>(new T(before, after));
+        return std::shared_ptr<T>(new T(before, after, std::forward<Args>(args)...));
     }
 
     /// Create a simple task that has no time boundaries for execution.
-    template<typename T>
+    template<typename T, typename... Args>
     std::shared_ptr<typename std::enable_if<std::is_base_of<Task, T>::value, T>::type>
-    MakeTask()
+    MakeTask(Args&& ...args)
     {
-        return std::shared_ptr<T>(new T);
+        return std::shared_ptr<T>(new T(std::forward<Args>(args)...));
     }
 
 }  // namespace Lib
