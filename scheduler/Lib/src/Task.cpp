@@ -69,6 +69,11 @@ Scheduler::Lib::Task* Scheduler::Lib::Task::Depends(Task* task)
     if (!task) return this;
     if (!m_valid) return this;
 
+    // There's really no better option in the case that the Task is active.
+    // Whenever depending on a submitted task it is probably best to check
+    // that the Requires() call comes back true for everything.
+    if (IsComplete() || IsActive()) return this;
+
      // Early check in case the task ID is already linked as a dependency
      // this is to prevent duplicates being added.
     if (Requires(task)) return this;
@@ -81,6 +86,11 @@ Scheduler::Lib::Task* Scheduler::Lib::Task::Depends(Task* task)
     if (task->Requires(this)) m_valid = false;
 
     return this;
+}
+
+bool Scheduler::Lib::Task::IsActive() const
+{
+    return m_state == TaskState::ACTIVE;
 }
 
 bool Scheduler::Lib::Task::IsComplete() const

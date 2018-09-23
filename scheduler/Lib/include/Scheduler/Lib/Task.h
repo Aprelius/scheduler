@@ -77,6 +77,11 @@ namespace Lib {
         /// Retrieve the ID for the task.
         const UUID& Id() const { return m_id; }
 
+        /// Predeicate to check if the task is currently executing. This
+        /// could be multiple states, but it if true it always means the
+        /// task can no longer be modified.
+        bool IsActive() const;
+
         /// Predicate check if the task has completed. This should not be
         /// used to determine success or failure, just that the task is now
         /// complete.
