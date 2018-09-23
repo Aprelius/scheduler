@@ -48,7 +48,7 @@ namespace Lib {
         /// active or complete then the Add will be skipped. It is always a
         /// good idea to verify that a child was successfully added with the
         /// IsChild call.
-        Chain* Add(TaskPtr& task) { return Add(task.get()); }
+        virtual Chain* Add(TaskPtr& task) { return Add(task.get()); }
 
         /// Predeicate check for whether or not the chain has active children
         /// that are linked.
@@ -79,6 +79,8 @@ namespace Lib {
         /// by implementing classes if the behavior should be changed.
         virtual bool IsModifiable() const { return IsComplete(); }
 
+        const std::vector<TaskPtr>& GetChildren() const { return m_children; }
+
         ChainPtr shared_from_this();
 
         /// Retrieve the Chain identifier as a string or with a full
@@ -86,8 +88,15 @@ namespace Lib {
         /// will also include the children of the chain.
         std::string ToString(bool asShort = false) const override;
 
-    private:
+    protected:
+
+        std::vector<TaskPtr>& GetChildren() { return m_children; }
+
         Chain();
+
+        Chain(
+            const Clock::time_point& after,
+            const Clock::time_point& before);
 
         template<typename... Args,
             typename = typename std::enable_if<
@@ -100,7 +109,7 @@ namespace Lib {
         {
             m_children.reserve(PackUtils<Args...>::size);
             PackUtils<Args...>::ForEach([&](auto& task){
-                Add(task);
+                this->Add(task);
             }, std::forward<Args>(args)...);
         }
 
@@ -111,10 +120,11 @@ namespace Lib {
         {
             m_children.reserve(PackUtils<Args...>::size);
             PackUtils<Args...>::ForEach([&](auto& task){
-                Add(task);
+                this->Add(task);
             }, std::forward<Args>(args)...);
         }
 
+    private:
         std::vector<TaskPtr> m_children;
     };
 

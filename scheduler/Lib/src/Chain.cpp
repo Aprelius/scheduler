@@ -4,7 +4,13 @@
 
 Scheduler::Lib::Chain::Chain()
     : Task()
-{}
+{ }
+
+Scheduler::Lib::Chain::Chain(
+    const Clock::time_point& after,
+    const Clock::time_point& before)
+    : Task(after, before)
+{ }
 
 Scheduler::Lib::Chain::~Chain() { }
 
