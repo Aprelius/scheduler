@@ -2,30 +2,21 @@
 
 #include <sstream>
 
-void Scheduler::Lib::Chain::Process(
-    ChainPtr& chain,
-    std::vector<TaskPtr>& tasks,
-    Task* task)
-{
-    TaskPtr taskPtr = task->shared_from_this();
-    Process(chain, tasks, taskPtr);
-}
-
-void Scheduler::Lib::Chain::Process(
-    ChainPtr& chain,
-    std::vector<TaskPtr>& tasks,
-    TaskPtr& task)
-{
-    if (!tasks.empty()) task->Depends(tasks.front());
-    tasks.emplace(tasks.begin(), task->shared_from_this());
-    if (!task->IsValid()) chain->SetValid(false);
-}
-
 Scheduler::Lib::Chain::Chain()
     : Task()
 {}
 
 Scheduler::Lib::Chain::~Chain() { }
+
+Scheduler::Lib::Chain* Scheduler::Lib::Chain::Add(Task* task)
+{
+    if (IsComplete() || IsActive()) return this;
+    TaskPtr taskPtr = task->shared_from_this();
+    if (HasChildren()) taskPtr->Depends(m_children.front());
+    SetValid(taskPtr->IsValid());
+    m_children.emplace(m_children.begin(), std::move(taskPtr));
+    return this;
+}
 
 bool Scheduler::Lib::Chain::IsChild(const Task* task) const
 {

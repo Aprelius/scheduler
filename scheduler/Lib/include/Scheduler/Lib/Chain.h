@@ -24,13 +24,25 @@ namespace Lib {
             chain->m_children.reserve(PackUtils<Args...>::size);
 
             PackUtils<Args...>::ForEach([&](auto& task){
-                Chain::Process(chain, chain->m_children, task);
+                chain->Add(task);
             }, std::forward<Args>(args)...);
 
             return chain;
         }
 
         ~Chain();
+
+        /// Add a linked child task to the chain. If the chain is already
+        /// active or complete then the Add will be skipped. It is always a
+        /// good idea to verify that a child was successfully added with the
+        /// IsChild call.
+        Chain* Add(Task* task);
+
+        /// Add a linked child task to the chain. If the chain is already
+        /// active or complete then the Add will be skipped. It is always a
+        /// good idea to verify that a child was successfully added with the
+        /// IsChild call.
+        Chain* Add(TaskPtr& task) { return Add(task.get()); }
 
         /// Predeicate check for whether or not the chain has active children
         /// that are linked.
@@ -60,16 +72,6 @@ namespace Lib {
 
     private:
         Chain();
-
-        static void Process(
-            ChainPtr& chain,
-            std::vector<TaskPtr>& tasks,
-            Task* task);
-
-        static void Process(
-            ChainPtr& chain,
-            std::vector<TaskPtr>& tasks,
-            TaskPtr& task);
 
         std::vector<TaskPtr> m_children;
     };
