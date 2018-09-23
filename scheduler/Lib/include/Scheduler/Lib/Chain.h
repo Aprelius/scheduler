@@ -54,6 +54,11 @@ namespace Lib {
         /// that are linked.
         bool HasChildren() const { return !m_children.empty(); }
 
+        /// The name of the class as it should appear in ToString. Useful
+        /// for implementing classes which only need to change the instance
+        /// name.
+        const char* Instance() const override { return "Chain"; }
+
         /// Predicate check for if the given task is a child of the chain. No
         /// ordering is implied by the successful return, only that the child
         /// is required by the chain.

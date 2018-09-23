@@ -47,7 +47,7 @@ std::string Scheduler::Lib::Chain::ToString(bool asShort) const
     if (asShort) return Task::ToString(asShort);
 
     std::ostringstream o;
-    o << "<Chain " << Id() << " (" << GetState() << ") [";
+    o << "<" <<  Instance() << ": " << Id() << " (" << GetState() << ") [";
     for (size_t i = 0; i < m_children.size(); ++i)
     {
         o << m_children[i];

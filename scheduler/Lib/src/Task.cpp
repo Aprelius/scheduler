@@ -151,7 +151,7 @@ std::string Scheduler::Lib::Task::ToString(bool asShort) const
     if (asShort) return m_id.ToString();
 
     std::ostringstream o;
-    o << "<Task: " << m_id << " (" << m_state << ")>";
+    o << "<" << Instance() << ": " << m_id << " (" << m_state << ")>";
     return o.str();
 }
 

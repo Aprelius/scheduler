@@ -78,6 +78,11 @@ namespace Lib {
         /// Retrieve the ID for the task.
         const UUID& Id() const { return m_id; }
 
+        /// The name of the class as it should appear in ToString. Useful
+        /// for implementing classes which only need to change the instance
+        /// name.
+        virtual const char* Instance() const { return "Task"; }
+
         /// Predeicate to check if the task is currently executing. This
         /// could be multiple states, but it if true it always means the
         /// task can no longer be modified.
