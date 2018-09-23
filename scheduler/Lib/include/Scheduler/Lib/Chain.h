@@ -35,18 +35,6 @@ namespace Lib {
         MakeTask(Args&& ...args);
 
     public:
-        template<typename... Args>
-        static ChainPtr Create(Args&& ...args)
-        {
-            ChainPtr chain(new Chain);
-            chain->m_children.reserve(PackUtils<Args...>::size);
-
-            PackUtils<Args...>::ForEach([&](auto& task){
-                chain->Add(task);
-            }, std::forward<Args>(args)...);
-
-            return chain;
-        }
 
         ~Chain();
 

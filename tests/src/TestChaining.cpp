@@ -83,7 +83,7 @@ TEST(ChainingTasks, CircularInvalidBeforeConstruction)
 
     // taskA and taskC are already invalid by the time the chain
     // is constructed.
-    ChainPtr chain = Chain::Create(taskA, taskC, taskD);
+    ChainPtr chain = MakeTask<Chain>(taskA, taskC, taskD);
     ASSERT_FALSE(chain->IsValid());
     std::cout << chain << '\n';
 }
@@ -105,7 +105,7 @@ TEST(ChainingTasks, InvalidMultiLevelCircular)
     taskA->Depends(taskD);
     ASSERT_TRUE(taskA->Requires(taskD));
 
-    ChainPtr chain = Chain::Create(taskA, taskB, taskC, taskD);
+    ChainPtr chain = MakeTask<Chain>(taskA, taskB, taskC, taskD);
     ASSERT_FALSE(chain->IsValid());
     std::cout << chain << '\n';
 }
@@ -120,7 +120,7 @@ TEST(ChainingTasks, InvalidByConstruction)
     ASSERT_TRUE(taskA->IsValid());
     ASSERT_TRUE(taskB->IsValid());
 
-    ChainPtr chain = Chain::Create(taskB, taskA, taskC);
+    ChainPtr chain = MakeTask<Chain>(taskB, taskA, taskC);
     ASSERT_FALSE(chain->IsValid());
     std::cout << chain << '\n';
 }
