@@ -10,7 +10,7 @@ Scheduler::Lib::Chain::~Chain() { }
 
 Scheduler::Lib::Chain* Scheduler::Lib::Chain::Add(Task* task)
 {
-    if (IsComplete() || IsActive()) return this;
+    if (IsModifiable()) return this;
     TaskPtr taskPtr = task->shared_from_this();
     if (HasChildren()) taskPtr->Depends(m_children.front());
     SetValid(taskPtr->IsValid());

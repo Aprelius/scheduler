@@ -69,6 +69,11 @@ namespace Lib {
         /// is required by the chain.
         bool IsChild(const UUID& id) const;
 
+        /// Predicate check for checking the status of whetehr the task
+        /// is still in a modifiable state. This is expected to be overriden
+        /// by implementing classes if the behavior should be changed.
+        virtual bool IsModifiable() const { return IsComplete(); }
+
         ChainPtr shared_from_this();
 
         /// Retrieve the Chain identifier as a string or with a full
