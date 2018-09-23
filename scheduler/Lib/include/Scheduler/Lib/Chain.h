@@ -42,7 +42,7 @@ namespace Lib {
         /// active or complete then the Add will be skipped. It is always a
         /// good idea to verify that a child was successfully added with the
         /// IsChild call.
-        Chain* Add(Task* task);
+        virtual Chain* Add(Task* task);
 
         /// Add a linked child task to the chain. If the chain is already
         /// active or complete then the Add will be skipped. It is always a
