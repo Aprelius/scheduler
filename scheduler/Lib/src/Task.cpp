@@ -150,6 +150,16 @@ void Scheduler::Lib::Task::SetState(TaskState state)
     m_state = state;
 }
 
+void Scheduler::Lib::Task::SetValid(bool status)
+{
+    // The validity state should not be changed once the task is
+    // complete or has begun running.
+    assert(!IsComplete());
+    assert(!IsActive());
+    if (!m_valid) return;
+    m_valid = status;
+}
+
 std::string Scheduler::Lib::Task::ToString(bool asShort) const
 {
     if (asShort) return m_id.ToString();

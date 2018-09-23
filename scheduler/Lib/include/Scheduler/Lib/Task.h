@@ -120,6 +120,8 @@ namespace Lib {
         Task();
         Task(const Clock::time_point& after, const Clock::time_point& before);
 
+        void SetValid(bool status);
+
     private:
         void SetState(TaskState state);
 
