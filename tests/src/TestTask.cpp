@@ -1,19 +1,20 @@
 #include <gtest/gtest.h>
 
-#include <Scheduler/Common/Clock.h>
 #include <Scheduler/Lib/Task.h>
+#include <Scheduler/Tests/ClockUtils.h>
 #include <iostream>
 
 using std::chrono::seconds;
 using namespace Scheduler;
 using namespace Scheduler::Lib;
+using namespace Scheduler::Tests;
 
-static Clock::time_point Future(const Clock::duration& length)
+Clock::time_point Scheduler::Tests::Future(const Clock::duration& length)
 {
     return Clock::now() + length;
 }
 
-static Clock::time_point Past(const Clock::duration& length)
+Clock::time_point Scheduler::Tests::Past(const Clock::duration& length)
 {
     return Clock::now() - length;
 }
