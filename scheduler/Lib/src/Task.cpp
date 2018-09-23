@@ -12,6 +12,7 @@ const char* Scheduler::Lib::TaskStateToStr(TaskState state)
     if (state == TaskState::NEW) return "NEW";
     if (state == TaskState::PENDING) return "PENDING";
     if (state == TaskState::SUCCESS) return "SUCCESS";
+    assert(!"Unknown task state");
     return "<Unknown TaskState>";
 }
 
