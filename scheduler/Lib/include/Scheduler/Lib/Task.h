@@ -114,7 +114,7 @@ namespace Lib {
 
         /// Retrieve the Task identifier as a string or with a descriptive
         /// identifier.
-        std::string ToString(bool asShort = false) const;
+        virtual std::string ToString(bool asShort = false) const;
 
     protected:
         Task();
