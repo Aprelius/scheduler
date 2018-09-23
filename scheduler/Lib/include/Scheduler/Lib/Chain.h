@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Scheduler/Common/PackUtils.h>
+#include <Scheduler/Common/TypeTraits.h>
 #include <Scheduler/Lib/Task.h>
 #include <algorithm>
 #include <iosfwd>
@@ -16,6 +17,25 @@ namespace Lib {
 
     class Chain : public Task
     {
+        template<typename T, typename... Args>
+        friend std::shared_ptr<typename std::enable_if<std::is_base_of<Task, T>::value, T>::type>
+        After(const Clock::time_point& point, Args&& ...args);
+
+        template<typename T, typename... Args>
+        friend std::shared_ptr<typename std::enable_if<std::is_base_of<Task, T>::value, T>::type>
+        Before(const Clock::time_point& point, Args&& ...args);
+
+        template<typename T, typename... Args>
+        friend std::shared_ptr<typename std::enable_if<std::is_base_of<Task, T>::value, T>::type>
+        Between(
+            const Clock::time_point& after,
+            const Clock::time_point& before,
+            Args&& ...args);
+
+        template<typename T, typename... Args>
+        friend std::shared_ptr<typename std::enable_if<std::is_base_of<Task, T>::value, T>::type>
+        MakeTask(Args&& ...args);
+
     public:
         template<typename... Args>
         static ChainPtr Create(Args&& ...args)
@@ -72,6 +92,32 @@ namespace Lib {
 
     private:
         Chain();
+
+        template<typename... Args,
+            typename = typename std::enable_if<
+                are_all_convertible<TaskPtr, Args...>::value>::type>
+        Chain(
+            const Clock::time_point& after,
+            const Clock::time_point& before,
+            Args&& ...args)
+            : Task(after, before)
+        {
+            m_children.reserve(PackUtils<Args...>::size);
+            PackUtils<Args...>::ForEach([&](auto& task){
+                Add(task);
+            }, std::forward<Args>(args)...);
+        }
+
+        template<typename... Args,
+            typename = typename std::enable_if<
+                are_all_convertible<TaskPtr, Args...>::value>::type>
+        Chain(Args&& ...args)
+        {
+            m_children.reserve(PackUtils<Args...>::size);
+            PackUtils<Args...>::ForEach([&](auto& task){
+                Add(task);
+            }, std::forward<Args>(args)...);
+        }
 
         std::vector<TaskPtr> m_children;
     };

@@ -2,8 +2,12 @@
 
 #include <Scheduler/Lib/Chain.h>
 #include <Scheduler/Lib/Task.h>
+#include <Scheduler/Tests/ClockUtils.h>
 
+using namespace Scheduler;
 using namespace Scheduler::Lib;
+using namespace Scheduler::Tests;
+using std::chrono::seconds;
 
 TEST(ChainingTasks, ByContruction)
 {
@@ -11,7 +15,7 @@ TEST(ChainingTasks, ByContruction)
             taskB = MakeTask<Task>(),
             taskC = MakeTask<Task>();
 
-    ChainPtr chain = Chain::Create(taskA, taskB, taskC);
+    ChainPtr chain = MakeTask<Chain>(taskA, taskB, taskC);
 
     // Chain[taskA -> taskB -> taskC]
 
@@ -118,5 +122,65 @@ TEST(ChainingTasks, InvalidByConstruction)
 
     ChainPtr chain = Chain::Create(taskB, taskA, taskC);
     ASSERT_FALSE(chain->IsValid());
+    std::cout << chain << '\n';
+}
+
+TEST(ChainingTaskConstructors, AfterContruction)
+{
+    TaskPtr taskA = MakeTask<Task>(),
+            taskB = MakeTask<Task>(),
+            taskC = MakeTask<Task>();
+
+    ChainPtr chain = After<Chain>(
+        Future(seconds(10)),
+        taskA, taskB, taskC);
+
+    ASSERT_EQ(chain->GetState(), TaskState::NEW);
+    ASSERT_TRUE(chain->IsPremature());
+    ASSERT_FALSE(chain->IsExpired());
+
+    // Chain[taskA -> taskB -> taskC]
+
+    ASSERT_TRUE(chain->IsValid());
+    ASSERT_TRUE(taskA->IsValid());
+    ASSERT_TRUE(taskB->IsValid());
+    ASSERT_TRUE(taskC->IsValid());
+
+    ASSERT_TRUE(taskC->Requires(taskB));
+    ASSERT_TRUE(taskB->Requires(taskA));
+
+    ASSERT_TRUE(chain->IsChild(taskA));
+    ASSERT_TRUE(chain->IsChild(taskB));
+    ASSERT_TRUE(chain->IsChild(taskC));
+    std::cout << chain << '\n';
+}
+
+TEST(ChainingTaskConstructors, BeforeContruction)
+{
+    TaskPtr taskA = MakeTask<Task>(),
+            taskB = MakeTask<Task>(),
+            taskC = MakeTask<Task>();
+
+    ChainPtr chain = Before<Chain>(
+        Future(seconds(10)),
+        taskA, taskB, taskC);
+
+    ASSERT_EQ(chain->GetState(), TaskState::NEW);
+    ASSERT_FALSE(chain->IsPremature());
+    ASSERT_FALSE(chain->IsExpired());
+
+    // Chain[taskA -> taskB -> taskC]
+
+    ASSERT_TRUE(chain->IsValid());
+    ASSERT_TRUE(taskA->IsValid());
+    ASSERT_TRUE(taskB->IsValid());
+    ASSERT_TRUE(taskC->IsValid());
+
+    ASSERT_TRUE(taskC->Requires(taskB));
+    ASSERT_TRUE(taskB->Requires(taskA));
+
+    ASSERT_TRUE(chain->IsChild(taskA));
+    ASSERT_TRUE(chain->IsChild(taskB));
+    ASSERT_TRUE(chain->IsChild(taskC));
     std::cout << chain << '\n';
 }
