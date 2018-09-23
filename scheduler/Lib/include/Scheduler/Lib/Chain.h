@@ -7,8 +7,6 @@
 #include <iosfwd>
 #include <vector>
 
-#include <iostream>
-
 namespace Scheduler {
 namespace Lib {
 
