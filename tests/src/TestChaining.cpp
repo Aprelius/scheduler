@@ -7,9 +7,9 @@ using namespace Scheduler::Lib;
 
 TEST(ChainingTasks, ByContruction)
 {
-    TaskPtr taskA = Task::Create(),
-            taskB = Task::Create(),
-            taskC = Task::Create();
+    TaskPtr taskA = MakeTask<Task>(),
+            taskB = MakeTask<Task>(),
+            taskC = MakeTask<Task>();
 
     ChainPtr chain = Chain::Create(taskA, taskB, taskC);
 
@@ -31,10 +31,10 @@ TEST(ChainingTasks, ByContruction)
 
 TEST(ChainingTasks, CircularInvalidBeforeConstruction)
 {
-    TaskPtr taskA = Task::Create(),
-            taskB = Task::Create(),
-            taskC = Task::Create(),
-            taskD = Task::Create();
+    TaskPtr taskA = MakeTask<Task>(),
+            taskB = MakeTask<Task>(),
+            taskC = MakeTask<Task>(),
+            taskD = MakeTask<Task>();
 
     // taskA
     //      \
@@ -86,11 +86,11 @@ TEST(ChainingTasks, CircularInvalidBeforeConstruction)
 
 TEST(ChainingTasks, InvalidMultiLevelCircular)
 {
-    TaskPtr taskA = Task::Create(),
-            taskB = Task::Create(),
-            taskC = Task::Create(),
-            taskD = Task::Create(),
-            taskE = Task::Create();
+    TaskPtr taskA = MakeTask<Task>(),
+            taskB = MakeTask<Task>(),
+            taskC = MakeTask<Task>(),
+            taskD = MakeTask<Task>(),
+            taskE = MakeTask<Task>();
 
     std::cout << "TaskA = " << taskA << '\n';
     std::cout << "TaskB = " << taskB << '\n';
@@ -108,9 +108,9 @@ TEST(ChainingTasks, InvalidMultiLevelCircular)
 
 TEST(ChainingTasks, InvalidByConstruction)
 {
-    TaskPtr taskA = Task::Create(),
-            taskB = Task::Create(),
-            taskC = Task::Create();
+    TaskPtr taskA = MakeTask<Task>(),
+            taskB = MakeTask<Task>(),
+            taskC = MakeTask<Task>();
 
     taskB->Depends(taskA);
     ASSERT_TRUE(taskA->IsValid());

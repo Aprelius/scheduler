@@ -20,30 +20,6 @@ std::ostream& Scheduler::Lib::operator<<(std::ostream& o, TaskState state)
     return o << TaskStateToStr(state);
 }
 
-Scheduler::Lib::TaskPtr Scheduler::Lib::Task::After(
-    const Clock::time_point& point)
-{
-    return TaskPtr(new Task(Clock::time_point::max(), point));
-}
-
-Scheduler::Lib::TaskPtr Scheduler::Lib::Task::Before(
-    const Clock::time_point& point)
-{
-    return TaskPtr(new Task(point, Clock::time_point::max()));
-}
-
-Scheduler::Lib::TaskPtr Scheduler::Lib::Task::Between(
-    const Clock::time_point& after,
-    const Clock::time_point& before)
-{
-    return TaskPtr(new Task(before, after));
-}
-
-Scheduler::Lib::TaskPtr Scheduler::Lib::Task::Create()
-{
-    return TaskPtr(new Task);
-}
-
 Scheduler::Lib::Task::Task()
     : m_id(true),
       m_state(TaskState::NEW),

@@ -4,6 +4,7 @@
 #include <Scheduler/Lib/UUID.h>
 #include <iosfwd>
 #include <memory>
+#include <type_traits>
 #include <vector>
 
 namespace Scheduler {
@@ -32,26 +33,23 @@ namespace Lib {
     {
         friend class Scheduler;
 
+        template<typename T>
+        friend std::shared_ptr<typename std::enable_if<std::is_base_of<Task, T>::value, T>::type>
+        After(const Clock::time_point& point);
+
+        template<typename T>
+        friend std::shared_ptr<typename std::enable_if<std::is_base_of<Task, T>::value, T>::type>
+        Before(const Clock::time_point& point);
+
+        template<typename T>
+        friend std::shared_ptr<typename std::enable_if<std::is_base_of<Task, T>::value, T>::type>
+        Between(const Clock::time_point& after, const Clock::time_point& before);
+
+        template<typename T>
+        friend std::shared_ptr<typename std::enable_if<std::is_base_of<Task, T>::value, T>::type>
+        MakeTask();
+
     public:
-        /// Create a task that should not execute after a given time.
-        /// It is expected that the time point given be in the future and
-        /// creating one in the past will generate a bad task.
-        static TaskPtr After(const Clock::time_point& point);
-
-        /// Create a Task that should not execute before a given time.
-        /// It is expected that the time point given be in the future and
-        /// creating one in the past will generate a bad task.
-        static TaskPtr Before(const Clock::time_point& point);
-
-        /// Create a task that should execute between two given time
-        /// points. Both values should follow the rules for the
-        /// individual constructors in be in the future or now.
-        static TaskPtr Between(
-            const Clock::time_point& after,
-            const Clock::time_point& before);
-
-        /// Create a simple task that has no time boundaries for execution.
-        static TaskPtr Create();
 
         /// The destructor.
         ~Task();
@@ -141,6 +139,44 @@ namespace Lib {
     std::ostream& operator<<(std::ostream& o, const Task* task);
 
     std::ostream& operator<<(std::ostream& o, const TaskPtr& task);
+
+    /// Create a task that should not execute after a given time.
+    /// It is expected that the time point given be in the future and
+    /// creating one in the past will generate a bad task.
+    template<typename T>
+    std::shared_ptr<typename std::enable_if<std::is_base_of<Task, T>::value, T>::type>
+    After(const Clock::time_point& point)
+    {
+        return std::shared_ptr<T>(new T(Clock::time_point::max(), point));
+    }
+
+    /// Create a Task that should not execute before a given time.
+    /// It is expected that the time point given be in the future and
+    /// creating one in the past will generate a bad task.
+    template<typename T>
+    std::shared_ptr<typename std::enable_if<std::is_base_of<Task, T>::value, T>::type>
+    Before(const Clock::time_point& point)
+    {
+        return std::shared_ptr<T>(new T(point, Clock::time_point::max()));
+    }
+
+    /// Create a task that should execute between two given time
+    /// points. Both values should follow the rules for the
+    /// individual constructors in be in the future or now.
+    template<typename T>
+    std::shared_ptr<typename std::enable_if<std::is_base_of<Task, T>::value, T>::type>
+    Between(const Clock::time_point& after, const Clock::time_point& before)
+    {
+        return std::shared_ptr<T>(new T(before, after));
+    }
+
+    /// Create a simple task that has no time boundaries for execution.
+    template<typename T>
+    std::shared_ptr<typename std::enable_if<std::is_base_of<Task, T>::value, T>::type>
+    MakeTask()
+    {
+        return std::shared_ptr<T>(new T);
+    }
 
 }  // namespace Lib
 }  // nmaespace Scheduler
