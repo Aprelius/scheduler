@@ -140,10 +140,10 @@ namespace Lib {
 
         bool Requires(const UUID& start, const UUID& parent, const UUID& id) const;
 
-        void SetValid(bool status);
-
     private:
         void SetState(TaskState state);
+
+        void SetValid(bool status);
 
         UUID m_id;
         TaskState m_state;
