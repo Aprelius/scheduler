@@ -6,6 +6,7 @@ const char* Scheduler::ErrorToStr(Error e)
 {
     if (e == E_FAILURE) return "E_FAILURE";
     if (e == E_SUCCESS) return "E_SUCCESS";
+    if (e == E_NOT_FOUND) return "E_NOT_FOUND";
     return "<Unknown>";
 }
 

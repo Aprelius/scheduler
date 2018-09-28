@@ -7,7 +7,8 @@ namespace Scheduler {
     enum Error
     {
       E_FAILURE = -1,
-      E_SUCCESS = 0
+      E_SUCCESS = 0,
+      E_NOT_FOUND
     };
 
     const char* ErrorToStr(Error e);
