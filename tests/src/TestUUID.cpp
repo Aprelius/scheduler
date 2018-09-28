@@ -14,6 +14,20 @@ TEST(UUIDInit, Initialize)
     ASSERT_NE(uuidA, uuidB);
 }
 
+TEST(UUIDInit, CopyAndMove)
+{
+    static const char* STRINGA = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+    UUID uuidA;
+    {
+        UUID uuidB = UUID::FromString(STRINGA);
+        ASSERT_TRUE(uuidB.IsValid());
+        uuidA = std::move(uuidB);
+    }
+    ASSERT_TRUE(uuidA.IsValid());
+    ASSERT_EQ(uuidA.Size(), 16U);
+    ASSERT_EQ(uuidA.ToString(false), STRINGA);
+}
+
 TEST(UUIDInit, UUIDFromString)
 {
     static const char* STRINGA = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
