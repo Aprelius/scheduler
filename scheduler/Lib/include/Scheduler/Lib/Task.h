@@ -61,6 +61,14 @@ namespace Lib {
         /// The destructor.
         virtual ~Task();
 
+        /// Return the time point for the given time which this task should not
+        /// be executed before.
+        Clock::time_point After() const { return m_after; }
+
+        /// Return the time point for the given time which this task should be
+        /// executed before it is considered expired.
+        Clock::time_point Before() const { return m_before; }
+
         /// Add the given task a dependency that must complete executing before
         /// this task may begin. ANy changes to the dependency list may be
         /// chained however you should always check IsValid before proceeding to
