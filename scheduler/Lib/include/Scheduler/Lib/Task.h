@@ -10,7 +10,9 @@
 namespace Scheduler {
 namespace Lib {
 
-    class Scheduler;
+    class Chain;
+    class Group;
+    class TaskScheduler;
 
     enum TaskState
     {
@@ -31,7 +33,9 @@ namespace Lib {
 
     class Task : public std::enable_shared_from_this<Task>
     {
-        friend class Scheduler;
+        friend class Chain;
+        friend class Group;
+        friend class TaskScheduler;
 
         template<typename T, typename... Args>
         friend std::shared_ptr<typename std::enable_if<std::is_base_of<Task, T>::value, T>::type>
