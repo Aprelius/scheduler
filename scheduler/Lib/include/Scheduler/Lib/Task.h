@@ -166,6 +166,8 @@ namespace Lib {
 
         virtual void Fail();
 
+        virtual TaskResult Run() = 0;
+
         void SetValid(bool status);
 
     private:

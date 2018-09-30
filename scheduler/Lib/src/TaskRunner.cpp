@@ -1,8 +1,12 @@
 #include <Scheduler/Lib/TaskRunner.h>
 
+#include <Scheduler/Common/Console.h>
 #include <Scheduler/Lib/Scheduler.h>
 #include <Scheduler/Lib/Task.h>
 #include <Scheduler/Lib/TaskManager.h>
+
+#include <iostream>
+#include <assert.h>
 
 Scheduler::Lib::TaskRunner::TaskRunner(TaskPtr&& task)
     : m_task(std::move(task))
@@ -31,8 +35,29 @@ void Scheduler::Lib::TaskRunner::Run()
     m_task->SetState(TaskState::ACTIVE);
     if (scheduler) scheduler->Notify(m_task->Id(), m_task->GetState());
 
-    m_task->SetState(TaskState::SUCCESS);
-    if (scheduler) scheduler->Notify(m_task->Id(), m_task->GetState());
+    Clock::time_point start = Clock::now();
+    TaskResult result = m_task->Run();
+    Clock::time_point stop = Clock::now();
+
+    int64_t length = std::chrono::duration_cast<
+        std::chrono::milliseconds>(stop - start).count();
+
+    if (result == TaskResult::RESULT_SUCCESS)
+    {
+        Console(std::cout) << "Task '" << m_task->Id()
+            << "' successfully executed in: " << length << "ms\n";
+        m_task->SetState(TaskState::SUCCESS);
+    }
+    else if (result == TaskResult::RESULT_FAILURE)
+    {
+        Console(std::cout) << "Task '" << m_task->Id()
+            << "' failed to execute after: " << length << "ms\n";
+        m_task->SetState(TaskState::FAILED);
+    }
+    assert(result != TaskResult::RESULT_RETRY);
+    if (scheduler) scheduler->Notify(
+        m_task->Id(),
+        m_task->GetState());
 }
 
 void Scheduler::Lib::TaskRunner::Release()
