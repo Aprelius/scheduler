@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 
+#include <Scheduler/Common/Console.h>
 #include <Scheduler/Lib/Group.h>
 #include <Scheduler/Lib/Task.h>
 #include <Scheduler/Tests/ClockUtils.h>
@@ -31,7 +32,7 @@ TEST(GroupingTasks, ByContruction)
     ASSERT_TRUE(group->IsChild(taskA));
     ASSERT_TRUE(group->IsChild(taskB));
     ASSERT_TRUE(group->IsChild(taskC));
-    std::cout << group << '\n';
+    Console(std::cout) << group << '\n';
 }
 
 TEST(GroupingTasks, CircularInvalidBeforeConstruction)
@@ -77,16 +78,16 @@ TEST(GroupingTasks, CircularInvalidBeforeConstruction)
     ASSERT_FALSE(taskA->IsValid());
     ASSERT_FALSE(taskC->IsValid());
 
-    std::cout << "TaskA = " << taskA << '\n';
-    std::cout << "TaskB = " << taskB << '\n';
-    std::cout << "TaskC = " << taskC << '\n';
-    std::cout << "TaskD = " << taskD << '\n';
+    Console(std::cout) << "TaskA = " << taskA << '\n';
+    Console(std::cout) << "TaskB = " << taskB << '\n';
+    Console(std::cout) << "TaskC = " << taskC << '\n';
+    Console(std::cout) << "TaskD = " << taskD << '\n';
 
     // taskA and taskC are already invalid by the time the group
     // is constructed.
     GroupPtr group = MakeTask<Group>(taskA, taskC, taskD);
     ASSERT_FALSE(group->IsValid());
-    std::cout << group << '\n';
+    Console(std::cout) << group << '\n';
 }
 
 TEST(GroupingTasks, ValidMultiLevelCircular)
@@ -97,11 +98,11 @@ TEST(GroupingTasks, ValidMultiLevelCircular)
             taskD = MakeTask<Task>(),
             taskE = MakeTask<Task>();
 
-    std::cout << "TaskA = " << taskA << '\n';
-    std::cout << "TaskB = " << taskB << '\n';
-    std::cout << "TaskC = " << taskC << '\n';
-    std::cout << "TaskD = " << taskD << '\n';
-    std::cout << "TaskE = " << taskE << '\n';
+    Console(std::cout) << "TaskA = " << taskA << '\n';
+    Console(std::cout) << "TaskB = " << taskB << '\n';
+    Console(std::cout) << "TaskC = " << taskC << '\n';
+    Console(std::cout) << "TaskD = " << taskD << '\n';
+    Console(std::cout) << "TaskE = " << taskE << '\n';
 
     taskA->Depends(taskD);
     ASSERT_TRUE(taskA->Requires(taskD));
@@ -111,7 +112,7 @@ TEST(GroupingTasks, ValidMultiLevelCircular)
 
     GroupPtr group = MakeTask<Group>(taskA, taskB, taskC, taskD);
     ASSERT_TRUE(group->IsValid());
-    std::cout << group << '\n';
+    Console(std::cout) << group << '\n';
 }
 
 TEST(GroupingTaskConstructors, AfterContruction)
@@ -141,7 +142,7 @@ TEST(GroupingTaskConstructors, AfterContruction)
     ASSERT_TRUE(group->IsChild(taskA));
     ASSERT_TRUE(group->IsChild(taskB));
     ASSERT_TRUE(group->IsChild(taskC));
-    std::cout << group << '\n';
+    Console(std::cout) << group << '\n';
 }
 
 TEST(GroupingTaskConstructors, BeforeContruction)
@@ -171,5 +172,5 @@ TEST(GroupingTaskConstructors, BeforeContruction)
     ASSERT_TRUE(group->IsChild(taskA));
     ASSERT_TRUE(group->IsChild(taskB));
     ASSERT_TRUE(group->IsChild(taskC));
-    std::cout << group << '\n';
+    Console(std::cout) << group << '\n';
 }

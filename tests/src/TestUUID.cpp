@@ -1,16 +1,18 @@
 #include <gtest/gtest.h>
 
+#include <Scheduler/Common/Console.h>
 #include <Scheduler/Lib/UUID.h>
 #include <iostream>
 #include <vector>
 
+using namespace Scheduler;
 using Scheduler::Lib::UUID;
 
 TEST(UUIDInit, Initialize)
 {
     UUID uuidA(true), uuidB(true);
-    std::cout << "UUID: " << uuidA << '\n';
-    std::cout << "UUID: " << uuidB << '\n';
+    Console(std::cout) << "UUID: " << uuidA << '\n';
+    Console(std::cout) << "UUID: " << uuidB << '\n';
     ASSERT_NE(uuidA, uuidB);
 }
 

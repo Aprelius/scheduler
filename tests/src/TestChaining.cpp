@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 
+#include <Scheduler/Common/Console.h>
 #include <Scheduler/Lib/Chain.h>
 #include <Scheduler/Lib/Task.h>
 #include <Scheduler/Tests/ClockUtils.h>
@@ -30,7 +31,7 @@ TEST(ChainingTasks, ByContruction)
     ASSERT_TRUE(chain->IsChild(taskA));
     ASSERT_TRUE(chain->IsChild(taskB));
     ASSERT_TRUE(chain->IsChild(taskC));
-    std::cout << chain << '\n';
+    Console(std::cout) << chain << '\n';
 }
 
 TEST(ChainingTasks, CircularInvalidBeforeConstruction)
@@ -76,16 +77,16 @@ TEST(ChainingTasks, CircularInvalidBeforeConstruction)
     ASSERT_FALSE(taskA->IsValid());
     ASSERT_FALSE(taskC->IsValid());
 
-    std::cout << "TaskA = " << taskA << '\n';
-    std::cout << "TaskB = " << taskB << '\n';
-    std::cout << "TaskC = " << taskC << '\n';
-    std::cout << "TaskD = " << taskD << '\n';
+    Console(std::cout) << "TaskA = " << taskA << '\n';
+    Console(std::cout) << "TaskB = " << taskB << '\n';
+    Console(std::cout) << "TaskC = " << taskC << '\n';
+    Console(std::cout) << "TaskD = " << taskD << '\n';
 
     // taskA and taskC are already invalid by the time the chain
     // is constructed.
     ChainPtr chain = MakeTask<Chain>(taskA, taskC, taskD);
     ASSERT_FALSE(chain->IsValid());
-    std::cout << chain << '\n';
+    Console(std::cout) << chain << '\n';
 }
 
 TEST(ChainingTasks, InvalidMultiLevelCircular)
@@ -96,18 +97,18 @@ TEST(ChainingTasks, InvalidMultiLevelCircular)
             taskD = MakeTask<Task>(),
             taskE = MakeTask<Task>();
 
-    std::cout << "TaskA = " << taskA << '\n';
-    std::cout << "TaskB = " << taskB << '\n';
-    std::cout << "TaskC = " << taskC << '\n';
-    std::cout << "TaskD = " << taskD << '\n';
-    std::cout << "TaskE = " << taskE << '\n';
+    Console(std::cout) << "TaskA = " << taskA << '\n';
+    Console(std::cout) << "TaskB = " << taskB << '\n';
+    Console(std::cout) << "TaskC = " << taskC << '\n';
+    Console(std::cout) << "TaskD = " << taskD << '\n';
+    Console(std::cout) << "TaskE = " << taskE << '\n';
 
     taskA->Depends(taskD);
     ASSERT_TRUE(taskA->Requires(taskD));
 
     ChainPtr chain = MakeTask<Chain>(taskA, taskB, taskC, taskD);
     ASSERT_FALSE(chain->IsValid());
-    std::cout << chain << '\n';
+    Console(std::cout) << chain << '\n';
 }
 
 TEST(ChainingTasks, InvalidByConstruction)
@@ -122,7 +123,7 @@ TEST(ChainingTasks, InvalidByConstruction)
 
     ChainPtr chain = MakeTask<Chain>(taskB, taskA, taskC);
     ASSERT_FALSE(chain->IsValid());
-    std::cout << chain << '\n';
+    Console(std::cout) << chain << '\n';
 }
 
 TEST(ChainingTaskConstructors, AfterContruction)
@@ -152,7 +153,7 @@ TEST(ChainingTaskConstructors, AfterContruction)
     ASSERT_TRUE(chain->IsChild(taskA));
     ASSERT_TRUE(chain->IsChild(taskB));
     ASSERT_TRUE(chain->IsChild(taskC));
-    std::cout << chain << '\n';
+    Console(std::cout) << chain << '\n';
 }
 
 TEST(ChainingTaskConstructors, BeforeContruction)
@@ -182,5 +183,5 @@ TEST(ChainingTaskConstructors, BeforeContruction)
     ASSERT_TRUE(chain->IsChild(taskA));
     ASSERT_TRUE(chain->IsChild(taskB));
     ASSERT_TRUE(chain->IsChild(taskC));
-    std::cout << chain << '\n';
+    Console(std::cout) << chain << '\n';
 }
