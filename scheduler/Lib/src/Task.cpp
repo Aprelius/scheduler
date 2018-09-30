@@ -64,6 +64,16 @@ Scheduler::Lib::Task* Scheduler::Lib::Task::Depends(Task* task)
     return this;
 }
 
+void Scheduler::Lib::Task::Fail()
+{
+    std::unique_lock<std::mutex> lock(m_mutex);
+    if (IsComplete()) return;
+
+    SetStateLocked(TaskState::FAILED, lock);
+    // We should probably have some way of notifying every task
+    // which depends on this one that it has failed.
+}
+
 bool Scheduler::Lib::Task::IsActive() const
 {
     return m_state == TaskState::ACTIVE;

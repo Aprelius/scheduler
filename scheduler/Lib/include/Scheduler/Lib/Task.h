@@ -156,6 +156,8 @@ namespace Lib {
 
         bool Requires(const UUID& start, const UUID& parent, const UUID& id) const;
 
+        virtual void Fail();
+
     private:
         void SetState(TaskState state);
         void SetStateLocked(
