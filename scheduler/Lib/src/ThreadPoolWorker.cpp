@@ -29,7 +29,7 @@ void Scheduler::Lib::ThreadPoolWorker::Enqueue(TaskRunnerPtr&& task)
 
     if (m_shutdown) return;
     m_queue.emplace_back(std::move(task));
-    if (m_waiting) m_cond.notify_one();
+    if (m_waiting) m_cond.notify_all();
 }
 
 std::hash<std::thread::id>::result_type
@@ -42,11 +42,17 @@ void Scheduler::Lib::ThreadPoolWorker::Run()
 {
     assert(m_threadId == std::thread::id());
 
+    m_threadId = std::this_thread::get_id();
+    {
+        std::lock_guard<std::mutex> lock(m_waitex);
+        m_ready = true;
+    }
+    m_wait.notify_all();
+
 #ifdef THREAD_POOL_DEBUGGING
     Console() << "Worker started\n";
 #endif  // THREAD_POOL_DEBUGGING
 
-    m_threadId = std::this_thread::get_id();
     while (RunOnce());
 
 #ifdef THREAD_POOL_DEBUGGING
@@ -58,11 +64,14 @@ bool Scheduler::Lib::ThreadPoolWorker::RunOnce()
 {
     std::unique_lock<std::mutex> lock(m_mutex);
     assert(m_threadId == std::this_thread::get_id());
+    assert(m_ready);
 
     if (m_shutdown)
     {
         assert(m_queue.empty());
         m_shutdownComplete = true;
+        lock.unlock();
+
         m_cond.notify_all();
         return false;
     }
@@ -71,12 +80,12 @@ bool Scheduler::Lib::ThreadPoolWorker::RunOnce()
     if (m_queue.empty())
     {
         m_waiting = true;
-        m_cond.notify_all();
         m_cond.wait(lock);
 
         assert(m_waiting);
         m_waiting = false;
     }
+    if (m_shutdown) return true;
     if (m_queue.empty()) return true;
 
     assert(lock.owns_lock());
@@ -113,8 +122,8 @@ void Scheduler::Lib::ThreadPoolWorker::Shutdown(bool wait)
     if (!wait) return;
 
     lock.lock();
-    while (!m_shutdownComplete) m_cond.wait(lock);
-    if (m_thread.joinable()) m_thread.join();
+    m_cond.wait(lock, [&]{ return m_shutdownComplete; });
+     if (m_thread.joinable()) m_thread.join();
 }
 
 void Scheduler::Lib::ThreadPoolWorker::Start()
@@ -125,8 +134,11 @@ void Scheduler::Lib::ThreadPoolWorker::Start()
 
 void Scheduler::Lib::ThreadPoolWorker::Wait() const
 {
-    std::unique_lock<std::mutex> lock(m_mutex);
+    std::unique_lock<std::mutex> lock(m_waitex);
 
-    if (m_waiting || m_shutdown) return;
-    while(!m_waiting && !m_shutdown) m_cond.wait(lock);
+    if (m_ready || m_shutdown) return;
+
+    m_wait.wait(lock,
+        [&]{ return m_ready || m_shutdown; });
+    m_wait.notify_all();
 }

@@ -38,6 +38,7 @@ namespace Lib {
         bool RunOnce();
         void Start();
 
+        bool m_ready = false;
         bool m_shutdown = false;
         bool m_shutdownComplete = false;
         bool m_waiting = false;
@@ -45,8 +46,8 @@ namespace Lib {
         std::weak_ptr<ThreadPoolExecutor> m_executor;
 
         std::deque<TaskRunnerPtr> m_queue;
-        mutable std::condition_variable m_cond;
-        mutable std::mutex m_mutex;
+        mutable std::condition_variable m_cond, m_wait;
+        mutable std::mutex m_mutex, m_waitex;
 
         std::thread::id m_threadId;
         std::thread m_thread;
