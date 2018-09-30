@@ -8,7 +8,9 @@ namespace Scheduler {
     {
       E_FAILURE = -1,
       E_SUCCESS = 0,
-      E_NOT_FOUND
+      E_NOT_FOUND,
+      E_CANCELLED,
+      E_COMPLETED
     };
 
     const char* ErrorToStr(Error e);
