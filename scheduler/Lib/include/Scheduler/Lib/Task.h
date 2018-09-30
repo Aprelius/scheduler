@@ -86,6 +86,13 @@ namespace Lib {
         /// ensure the dependency chain is a valid run-path.
         inline Task* Depends(TaskPtr& task) { return Depends(task.get()); }
 
+        /// Return a vector of the tasks which are depended on by this task
+        /// for completion.
+        const std::vector<TaskPtr>& GetDependencies() const
+        {
+            return m_dependencies;
+        }
+
         /// Retrieve teh state for the task.
         TaskState GetState() const { return m_state; }
 
