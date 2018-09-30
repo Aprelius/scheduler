@@ -18,6 +18,7 @@ Scheduler::Lib::Chain* Scheduler::Lib::Chain::Add(Task* task)
 {
     if (IsModifiable()) return this;
     TaskPtr taskPtr = task->shared_from_this();
+    Depends(taskPtr);
     if (HasChildren()) taskPtr->Depends(m_children.front());
     SetValid(taskPtr->IsValid());
     m_children.emplace(m_children.begin(), std::move(taskPtr));
