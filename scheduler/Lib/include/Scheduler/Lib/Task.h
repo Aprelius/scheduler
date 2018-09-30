@@ -31,6 +31,17 @@ namespace Lib {
 
     std::ostream& operator<<(std::ostream& o, TaskState state);
 
+    enum TaskResult
+    {
+        RESULT_SUCCESS,
+        RESULT_FAILURE,
+        RESULT_RETRY
+    };
+
+    const char* TaskResultToStr(TaskResult result);
+
+    std::ostream& operator<<(std::ostream& o, TaskResult result);
+
     class Task;
     typedef std::shared_ptr<Task> TaskPtr;
 
