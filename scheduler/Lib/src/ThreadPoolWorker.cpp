@@ -6,7 +6,7 @@
 #include <assert.h>
 
 // Uncomment to spam yourself with debugging logging.
-#define THREAD_POOL_DEBUGGING 1
+// #define THREAD_POOL_DEBUGGING 1
 
 Scheduler::Lib::ThreadPoolWorker::ThreadPoolWorker(
     std::weak_ptr<ThreadPoolExecutor>&& executor)

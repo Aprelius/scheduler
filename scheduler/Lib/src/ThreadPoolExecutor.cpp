@@ -7,7 +7,7 @@
 #include <iostream>
 
 // Uncomment to spam yourself with debugging logging.
-#define THREAD_POOL_DEBUGGING 1
+// #define THREAD_POOL_DEBUGGING 1
 
 Scheduler::Lib::ThreadPoolExecutor::ThreadPoolExecutor(
     const ExecutorParams& params)
