@@ -36,8 +36,6 @@ namespace Lib {
 
     class Task : public std::enable_shared_from_this<Task>
     {
-        friend class Chain;
-        friend class Group;
         friend class TaskRunner;
         friend class TaskScheduler;
 
@@ -157,13 +155,13 @@ namespace Lib {
 
         virtual void Fail();
 
+        void SetValid(bool status);
+
     private:
         void SetState(TaskState state);
         void SetStateLocked(
             TaskState state,
             std::unique_lock<std::mutex>& lock);
-
-        void SetValid(bool status);
 
         UUID m_id;
         TaskState m_state;
