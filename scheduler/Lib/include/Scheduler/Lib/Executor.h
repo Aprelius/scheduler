@@ -7,14 +7,18 @@
 namespace Scheduler {
 namespace Lib {
 
+    class TaskManager;
+    class TaskRunner;
+    class TaskScheduler;
+
+    class Executor;
+    typedef std::shared_ptr<Executor> ExecutorPtr;
+
     struct ExecutorParams
     {
         static const unsigned DEFAULT_CONCURRENCY;
         unsigned concurrency = DEFAULT_CONCURRENCY;
     };
-
-    class Executor;
-    typedef std::shared_ptr<Executor> ExecutorPtr;
 
     class Executor : public std::enable_shared_from_this<Executor>
     {
@@ -35,7 +39,7 @@ namespace Lib {
         /// Enqueue a task for execution. Depending on Implementation it
         /// may simply be moved to an executing worker queue tobe executed
         /// in short time.
-        virtual void Enqueue(TaskPtr& task) = 0;
+        virtual void Enqueue(std::shared_ptr<TaskRunner>& task) = 0;
 
         /// Shutdown the executor. Unless the shutdown is coming as a means
         /// of crashing it is advisable to ALWAYS wait for the shutdown to

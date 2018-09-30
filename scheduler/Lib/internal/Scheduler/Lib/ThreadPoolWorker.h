@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Scheduler/Lib/Task.h>
+#include <Scheduler/Lib/TaskRunner.h>
 #include <condition_variable>
 #include <deque>
 #include <memory>
@@ -24,7 +24,7 @@ namespace Lib {
         ThreadPoolWorker(std::weak_ptr<ThreadPoolExecutor>&& executor);
         ~ThreadPoolWorker();
 
-        void Enqueue(std::shared_ptr<Task>&& task);
+        void Enqueue(TaskRunnerPtr&& task);
 
         std::hash<std::thread::id>::result_type Id() const;
 
@@ -44,7 +44,7 @@ namespace Lib {
 
         std::weak_ptr<ThreadPoolExecutor> m_executor;
 
-        std::deque<TaskPtr> m_queue;
+        std::deque<TaskRunnerPtr> m_queue;
         mutable std::condition_variable m_cond;
         mutable std::mutex m_mutex;
 

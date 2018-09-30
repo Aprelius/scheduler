@@ -2,6 +2,7 @@
 
 #include <Scheduler/Lib/Executor.h>
 #include <Scheduler/Lib/Task.h>
+#include <Scheduler/Lib/TaskRunner.h>
 
 using namespace Scheduler;
 using namespace Scheduler::Lib;
@@ -16,8 +17,12 @@ TEST(ExecutorInit, StartupAndShutdown)
     ASSERT_EQ(Executor::Create(params, executor), E_SUCCESS);
 
     TaskPtr task = MakeTask<Task>();
-
-    executor->Enqueue(task);
+    {
+        TaskPtr t = task->shared_from_this();
+        TaskRunnerPtr runner = std::make_shared<TaskRunner>(
+            std::move(t));
+        executor->Enqueue(runner);
+    }
 
     task->Wait();
     ASSERT_TRUE(task->IsValid());

@@ -14,7 +14,9 @@ set(PROJECT_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
 add_executable(SchedulerTests)
 
 target_include_directories(SchedulerTests
-    PUBLIC ${PROJECT_INCLUDE_DIR})
+    PUBLIC ${PROJECT_INCLUDE_DIR}
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/../scheduler/Lib/internal)
 
 # Create the directory for the Header Files
 FILE(GLOB_RECURSE HEADERS ${PROJECT_INCLUDE_DIR} "include/*.h")

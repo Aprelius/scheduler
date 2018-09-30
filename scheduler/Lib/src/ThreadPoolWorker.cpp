@@ -16,7 +16,7 @@ Scheduler::Lib::ThreadPoolWorker::ThreadPoolWorker(
 
 Scheduler::Lib::ThreadPoolWorker::~ThreadPoolWorker() { Shutdown(); }
 
-void Scheduler::Lib::ThreadPoolWorker::Enqueue(TaskPtr&& task)
+void Scheduler::Lib::ThreadPoolWorker::Enqueue(TaskRunnerPtr&& task)
 {
     std::lock_guard<std::mutex> lock(m_mutex);
 
@@ -73,18 +73,18 @@ bool Scheduler::Lib::ThreadPoolWorker::RunOnce()
         m_waiting = true;
         m_cond.notify_all();
         m_cond.wait(lock);
+
         assert(m_waiting);
         m_waiting = false;
     }
     if (m_queue.empty()) return true;
 
     assert(lock.owns_lock());
-    TaskPtr task = std::move(m_queue.front());
+    TaskRunnerPtr task = std::move(m_queue.front());
     m_queue.pop_front();
 
     lock.unlock();
-    task->SetState(TaskState::ACTIVE);
-    task->SetState(TaskState::SUCCESS);
+    task->Run();
     return true;
 }
 
@@ -102,7 +102,7 @@ void Scheduler::Lib::ThreadPoolWorker::Shutdown(bool wait)
 
     m_shutdown = true;
 
-    std::deque<TaskPtr> queue = std::move(m_queue);
+    std::deque<TaskRunnerPtr> queue = std::move(m_queue);
     m_queue.clear();
 
     lock.unlock();

@@ -1,6 +1,7 @@
 #include <Scheduler/Lib/ThreadPoolExecutor.h>
 
 #include <Scheduler/Common/Console.h>
+#include <Scheduler/Lib/TaskRunner.h>
 #include <Scheduler/Lib/ThreadPoolWorker.h>
 #include <Scheduler/Lib/UUID.h>
 #include <iostream>
@@ -23,7 +24,7 @@ Scheduler::Error Scheduler::Lib::ThreadPoolExecutor::Cancel(const UUID& id)
     return E_SUCCESS;
 }
 
-void Scheduler::Lib::ThreadPoolExecutor::Enqueue(TaskPtr& task)
+void Scheduler::Lib::ThreadPoolExecutor::Enqueue(TaskRunnerPtr& task)
 {
     std::lock_guard<std::mutex> lock(m_mutex);
     unsigned concurrency = m_params.concurrency;
@@ -39,7 +40,7 @@ void Scheduler::Lib::ThreadPoolExecutor::Enqueue(TaskPtr& task)
     Console(std::cout) << "Executor accepted task: " << task->Id() << '\n';
 #endif  // THREAD_POOL_DEBUGGING
 
-    TaskPtr taskPtr = task->shared_from_this();
+    TaskRunnerPtr taskPtr = task->shared_from_this();
     size_t hash = std::hash<UUID>{}(taskPtr->Id());
     m_workers[hash % concurrency]->Enqueue(std::move(taskPtr));
 

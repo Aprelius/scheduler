@@ -14,9 +14,8 @@ namespace Lib {
 
     class Chain;
     class Group;
+    class TaskRunner;
     class TaskScheduler;
-
-    class ThreadPoolWorker;  // Maybe temporary?
 
     enum TaskState
     {
@@ -39,8 +38,8 @@ namespace Lib {
     {
         friend class Chain;
         friend class Group;
+        friend class TaskRunner;
         friend class TaskScheduler;
-        friend class ThreadPoolWorker;  // Maybe temporary?
 
         template<typename T, typename... Args>
         friend std::shared_ptr<typename std::enable_if<std::is_base_of<Task, T>::value, T>::type>

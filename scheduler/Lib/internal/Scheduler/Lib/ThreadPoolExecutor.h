@@ -17,7 +17,7 @@ namespace Lib {
 
         Error Cancel(const UUID& id) override;
 
-        void Enqueue(TaskPtr& task) override;
+        void Enqueue(std::shared_ptr<TaskRunner>& task) override;
 
         std::shared_ptr<ThreadPoolExecutor> shared_from_this();
 
