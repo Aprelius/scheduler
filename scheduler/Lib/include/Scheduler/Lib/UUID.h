@@ -30,6 +30,8 @@ namespace Lib {
 
         bool Empty() const { return !m_initialized; }
 
+        size_t Hash() const;
+
         void Initialize();
 
         bool IsValid() const { return Size() > 0; }
@@ -57,3 +59,17 @@ namespace Lib {
 
 }  // namespace Lib
 }  // namespace Scheduler
+
+namespace std {
+
+    template<>
+    struct hash<Scheduler::Lib::UUID>
+    {
+        typedef Scheduler::Lib::UUID UUID;
+        std::size_t operator()(UUID const& id) const
+        {
+            return id.Hash();
+        }
+    };
+
+}  // namespace std

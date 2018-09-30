@@ -43,6 +43,14 @@ Scheduler::Lib::UUID::UUID(bool initialize)
 
 Scheduler::Lib::UUID::~UUID() { }
 
+size_t Scheduler::Lib::UUID::Hash() const
+{
+    uint64_t hi, lo;
+    memcpy(&hi, m_data, 8);
+    memcpy(&lo, m_data + 8, 8);
+    return static_cast<size_t>(hi + lo);
+}
+
 void Scheduler::Lib::UUID::Initialize()
 {
     static Generator<uint8_t> generator(0, 15);
