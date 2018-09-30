@@ -152,8 +152,11 @@ void Scheduler::Lib::Task::SetStateLocked(
 {
     if (!lock.owns_lock()) lock.lock();
     if (IsComplete()) return;
-
-    m_state = state;
+    {
+        std::lock_guard<std::mutex> wait(m_waitex);
+        m_state = state;
+    }
+    m_wait.notify_all();
     m_cond.notify_all();
 }
 
@@ -178,9 +181,11 @@ std::string Scheduler::Lib::Task::ToString(bool asShort) const
 
 void Scheduler::Lib::Task::Wait() const
 {
+    std::unique_lock<std::mutex> lock(m_waitex);
     if (IsComplete()) return;
-    std::unique_lock<std::mutex> lock(m_mutex);
-    while (!IsComplete()) m_cond.wait(lock);
+
+    m_wait.wait(lock, [&]{ return IsComplete(); });
+    m_wait.notify_all();
 }
 
 std::ostream& Scheduler::Lib::operator<<(std::ostream& o, const Task* task)

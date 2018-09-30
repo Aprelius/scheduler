@@ -174,8 +174,8 @@ namespace Lib {
         bool m_valid = true;
 
         std::vector<TaskPtr> m_dependencies;
-        mutable std::condition_variable m_cond;
-        mutable std::mutex m_mutex;
+        mutable std::condition_variable m_cond, m_wait;
+        mutable std::mutex m_mutex, m_waitex;
     };
 
     std::ostream& operator<<(std::ostream& o, const Task* task);
