@@ -132,8 +132,19 @@ bool Scheduler::Lib::Task::IsPremature() const
 
 void Scheduler::Lib::Task::SetState(TaskState state)
 {
+    std::unique_lock<std::mutex> lock(m_mutex);
+    SetStateLocked(state, lock);
+}
+
+void Scheduler::Lib::Task::SetStateLocked(
+    TaskState state,
+    std::unique_lock<std::mutex>& lock)
+{
+    if (!lock.owns_lock()) lock.lock();
     if (IsComplete()) return;
+
     m_state = state;
+    m_cond.notify_all();
 }
 
 void Scheduler::Lib::Task::SetValid(bool status)
@@ -153,6 +164,13 @@ std::string Scheduler::Lib::Task::ToString(bool asShort) const
     std::ostringstream o;
     o << "<" << Instance() << ": " << m_id << " (" << m_state << ")>";
     return o.str();
+}
+
+void Scheduler::Lib::Task::Wait() const
+{
+    if (IsComplete()) return;
+    std::unique_lock<std::mutex> lock(m_mutex);
+    while (!IsComplete()) m_cond.wait(lock);
 }
 
 std::ostream& Scheduler::Lib::operator<<(std::ostream& o, const Task* task)

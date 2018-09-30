@@ -2,8 +2,10 @@
 
 #include <Scheduler/Common/Clock.h>
 #include <Scheduler/Lib/UUID.h>
+#include <condition_variable>
 #include <iosfwd>
 #include <memory>
+#include <mutex>
 #include <type_traits>
 #include <vector>
 
@@ -134,6 +136,10 @@ namespace Lib {
         /// identifier.
         virtual std::string ToString(bool asShort = false) const;
 
+        /// Wait for a tast to complete. The wait will trigger for any state that
+        /// sets it to Complete.
+        void Wait() const;
+
     protected:
         Task();
         Task(const Clock::time_point& after, const Clock::time_point& before);
@@ -142,6 +148,9 @@ namespace Lib {
 
     private:
         void SetState(TaskState state);
+        void SetStateLocked(
+            TaskState state,
+            std::unique_lock<std::mutex>& lock);
 
         void SetValid(bool status);
 
@@ -154,6 +163,8 @@ namespace Lib {
         bool m_valid = true;
 
         std::vector<TaskPtr> m_dependencies;
+        mutable std::condition_variable m_cond;
+        mutable std::mutex m_mutex;
     };
 
     std::ostream& operator<<(std::ostream& o, const Task* task);
