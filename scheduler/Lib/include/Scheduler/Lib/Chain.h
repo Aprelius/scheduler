@@ -10,14 +10,14 @@
 namespace Scheduler {
 namespace Lib {
 
-    class TaskScheduler;
+    class StandardTaskScheduler;
 
     class Chain;
     typedef std::shared_ptr<Chain> ChainPtr;
 
     class Chain : public Task
     {
-        friend class TaskScheduler;
+        friend class StandardTaskScheduler;
 
         template<typename T, typename... Args>
         friend std::shared_ptr<typename std::enable_if<std::is_base_of<Task, T>::value, T>::type>

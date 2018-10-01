@@ -2,6 +2,7 @@
 
 #include <Scheduler/Common/Console.h>
 #include <Scheduler/Lib/Chain.h>
+#include <Scheduler/Lib/Group.h>
 #include <Scheduler/Lib/Scheduler.h>
 #include <Scheduler/Lib/Task.h>
 
@@ -29,7 +30,7 @@ TEST(SchedularStartup, InitializeAndShutdown)
     ASSERT_EQ(taskB->GetState(), TaskState::SUCCESS);
 
     scheduler->Shutdown(true);
-    ASSERT_FALSE(scheduler->RunOnce());
+    ASSERT_TRUE(scheduler->IsShutdown());
 }
 
 TEST(Scheduler, DependentTasks)
@@ -60,7 +61,7 @@ TEST(Scheduler, DependentTasks)
     ASSERT_EQ(taskB->GetState(), TaskState::SUCCESS);
 
     scheduler->Shutdown(true);
-    ASSERT_FALSE(scheduler->RunOnce());
+    ASSERT_TRUE(scheduler->IsShutdown());
 }
 
 TEST(Scheduler, ProcessChainAndDependents)
@@ -112,5 +113,57 @@ TEST(Scheduler, ProcessChainAndDependents)
     Console(std::cout) << "taskD complete\n";
 
     scheduler->Shutdown(true);
-    ASSERT_FALSE(scheduler->RunOnce());
+    ASSERT_TRUE(scheduler->IsShutdown());
+}
+
+TEST(Scheduler, ProcessGroupAndDependents)
+{
+    SchedulerParams params;
+    params.executorParams.concurrency = 2;
+    SchedulerPtr scheduler;
+    ASSERT_EQ(TaskScheduler::Create(params, scheduler), E_SUCCESS);
+    scheduler->Start();
+
+    TaskPtr taskA = MakeTask<Task>(),
+            taskB = MakeTask<Task>(),
+            taskC = MakeTask<Task>(),
+            taskD = MakeTask<Task>();
+
+    GroupPtr group = MakeTask<Group>(taskA, taskB, taskC);
+
+    Console(std::cout) << "taskA = " << taskA->ToString(true) << '\n';
+    Console(std::cout) << "taskB = " << taskB->ToString(true) << '\n';
+    Console(std::cout) << "taskC = " << taskC->ToString(true) << '\n';
+    Console(std::cout) << "taskD = " << taskD->ToString(true) << '\n';
+
+    taskD->Depends(group.get());
+    ASSERT_TRUE(taskA->IsValid());
+    ASSERT_TRUE(group->IsValid());
+    ASSERT_TRUE(taskD->Requires(group.get()));
+
+    scheduler->Enqueue(taskD);
+    scheduler->Enqueue(group);
+
+    taskA->Wait();
+    ASSERT_EQ(taskA->GetState(), TaskState::SUCCESS);
+    Console(std::cout) << "taskA complete\n";
+
+    taskB->Wait();
+    ASSERT_EQ(taskB->GetState(), TaskState::SUCCESS);
+    Console(std::cout) << "taskB complete\n";
+
+    taskC->Wait();
+    ASSERT_EQ(taskC->GetState(), TaskState::SUCCESS);
+    Console(std::cout) << "taskC complete\n";
+
+    group->Wait();
+    ASSERT_EQ(group->GetState(), TaskState::SUCCESS);
+    Console(std::cout) << "group complete\n";
+
+    taskD->Wait();
+    ASSERT_EQ(taskD->GetState(), TaskState::SUCCESS);
+    Console(std::cout) << "taskD complete\n";
+
+    scheduler->Shutdown(true);
+    ASSERT_TRUE(scheduler->IsShutdown());
 }

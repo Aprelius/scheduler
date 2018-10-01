@@ -6,13 +6,8 @@
 #include <Scheduler/Lib/Task.h>
 #include <Scheduler/Lib/TaskManager.h>
 #include <Scheduler/Lib/UUID.h>
-#include <condition_variable>
-#include <deque>
 #include <memory>
-#include <mutex>
-#include <set>
-#include <thread>
-#include <unordered_map>
+
 
 namespace Scheduler {
 namespace Lib {
@@ -60,79 +55,43 @@ namespace Lib {
     public:
         static Error Create(const SchedulerParams& params, SchedulerPtr& sch);
 
-        virtual ~TaskScheduler();
+        virtual ~TaskScheduler() { }
 
-        void Enqueue(ChainPtr& chain);
+        template<typename T, typename
+            std::enable_if<
+                std::is_base_of<Task, T>::value
+                && !std::is_base_of<Chain, T>::value, T>::type* = nullptr>
+        void Enqueue(std::shared_ptr<T>& task)
+        {
+            Enqueue(task.get());
+        }
 
-        void Enqueue(ChainPtr&& chain);
+        template<typename T, typename
+            std::enable_if<
+                std::is_base_of<Chain, T>::value, T>::type* = nullptr>
+        void Enqueue(std::shared_ptr<T>& chain)
+        {
+            Enqueue(chain.get());
+        }
 
-        void Enqueue(TaskPtr& task);
+        virtual bool IsShutdown() const = 0;
 
-        void Enqueue(TaskPtr&& task);
-
-        void Notify();
+        virtual void Notify() = 0;
 
         void Run() { while (RunOnce()); }
-        bool RunOnce();
 
-        void Shutdown(bool wait = true);
+        virtual void Shutdown(bool wait = true) = 0;
 
-        void Start();
+        virtual void Start() = 0;
 
     protected:
-        TaskScheduler(
-            const SchedulerParams& params,
-            std::shared_ptr<ScheduleReporter>&& reporter,
-            std::shared_ptr<TaskManager>&& manager,
-            std::shared_ptr<Executor>&& executor);
+        virtual void Enqueue(Task* task) = 0;
 
-        virtual Error Initialize();
+        virtual void Enqueue(Chain* chain) = 0;
 
-        void NotifyLocked(std::unique_lock<std::mutex>& lock);
+        virtual void Notify(TaskPtr& task, TaskState state) = 0;
 
-        void Notify(TaskPtr& task, TaskState state);
-
-    private:
-        void EnqueueLocked(TaskPtr&& task, std::unique_lock<std::mutex>& lock);
-        void EnqueueLocked(TaskPtr& task, std::unique_lock<std::mutex>& lock);
-
-        bool HandleTask(TaskPtr& task);
-        bool HandleExpiredTask(TaskPtr& task);
-
-        bool IsTimedOut(const TaskPtr& task) const;
-
-        bool ProcessActiveTasks();
-        bool ProcessPendingQueue();
-        bool ProcessPendingTasks();
-
-        void PrunePrematureTasks();
-
-        // Scheduler is wiating for changes
-        bool m_waiting = false;
-        // Scheduler has been requested to shutdown
-        bool m_shutdown = false;
-        // Scheduler is shutdown
-        bool m_shutdownComplete = false;
-
-        std::condition_variable m_cond;
-        std::mutex m_mutex;
-        std::deque<UUID> m_queue;
-        std::thread m_thread;
-
-        // Cache the UUID of tasks which are active on the executor
-        std::set<UUID> m_active;
-        // Cache the list of tasks which are currently known and pending
-        std::set<UUID> m_pending;
-        // Cache the list of tasks which are premature and cannot be
-        // run until a certain time.
-        std::unordered_map<UUID, Clock::time_point> m_premature;
-        // Cache the list of tasks which may be timed out due to an
-        // unqueued dependency.
-        std::unordered_map<UUID, Clock::time_point> m_timeouts;
-
-        std::shared_ptr<Executor> m_executor;
-        std::shared_ptr<ScheduleReporter> m_reporter;
-        std::shared_ptr<TaskManager> m_manager;
+        virtual bool RunOnce() = 0;
     };
 
 }  // namespace Lib
