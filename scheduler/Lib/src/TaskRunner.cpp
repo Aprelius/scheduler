@@ -32,8 +32,10 @@ void Scheduler::Lib::TaskRunner::Run()
 {
     std::shared_ptr<TaskScheduler> scheduler = m_scheduler.lock();
 
-    m_task->SetState(TaskState::ACTIVE);
-    if (scheduler) scheduler->Notify(m_task->Id(), m_task->GetState());
+    if (scheduler) scheduler->Notify(
+        m_task,
+        TaskState::ACTIVE);
+    else m_task->SetState(TaskState::ACTIVE);
 
     Clock::time_point start = Clock::now();
     TaskResult result = m_task->Run();
@@ -46,18 +48,22 @@ void Scheduler::Lib::TaskRunner::Run()
     {
         Console(std::cout) << "Task '" << m_task->Id()
             << "' successfully executed in: " << length << "ms\n";
-        m_task->SetState(TaskState::SUCCESS);
+        if (scheduler) scheduler->Notify(
+            m_task,
+            TaskState::SUCCESS);
+        else m_task->SetState(TaskState::SUCCESS);
     }
     else if (result == TaskResult::RESULT_FAILURE)
     {
         Console(std::cout) << "Task '" << m_task->Id()
             << "' failed to execute after: " << length << "ms\n";
-        m_task->SetState(TaskState::FAILED);
+        if (scheduler) scheduler->Notify(
+            m_task,
+            TaskState::FAILED);
+        else m_task->SetState(TaskState::FAILED);
     }
+    Console() << "Run complete: "<<m_task->Id() << '\n';
     assert(result != TaskResult::RESULT_RETRY);
-    if (scheduler) scheduler->Notify(
-        m_task->Id(),
-        m_task->GetState());
 }
 
 void Scheduler::Lib::TaskRunner::Release()

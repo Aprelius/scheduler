@@ -191,19 +191,42 @@ void Scheduler::Lib::TaskScheduler::Notify()
 }
 
 void Scheduler::Lib::TaskScheduler::Notify(
-    const UUID& id,
+    TaskPtr& task,
     TaskState state)
 {
     std::unique_lock<std::mutex> lock(m_mutex);
 
-    if (state == TaskState::ACTIVE)
+    switch (state)
     {
-        assert(m_pending.count(id) == 0);
-        m_active.insert(id);
-        Console(std::cout) << "Task '" << id << "' moving to active state\n";
+        case TaskState::ACTIVE:
+        {
+            assert(m_pending.count(task->Id()) == 0);
+            m_active.insert(task->Id());
+            Console(std::cout) << "Task '" << task->Id()
+                << "' moving to ACTIVE state\n";
+            task->SetState(TaskState::ACTIVE);
+            break;
+        }
+        case TaskState::SUCCESS:
+        {
+            assert(m_pending.count(task->Id()) == 0);
+            assert(m_active.count(task->Id()) > 0);
+            m_active.erase(task->Id());
+            Console(std::cout) << "Task '" << task->Id()
+                << "' moving to SUCCESS state\n";
+            task->SetState(TaskState::SUCCESS);
+            break;
+        }
+        case TaskState::FAILED:
+            assert(!"FAILED case not yet handled");
+            break;
+        default:
+            assert(!"Unhandled TaskState state");
     }
 
+    Console() << "Notifying for: " << task->Id() << '\n';
     if (m_waiting) NotifyLocked(lock);
+    Console() << "Notify complete for: " << task->Id() << '\n';
 }
 
 void Scheduler::Lib::TaskScheduler::NotifyLocked(

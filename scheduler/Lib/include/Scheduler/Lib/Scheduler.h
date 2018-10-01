@@ -90,7 +90,7 @@ namespace Lib {
 
         void NotifyLocked(std::unique_lock<std::mutex>& lock);
 
-        void Notify(const UUID& id, TaskState state);
+        void Notify(TaskPtr& task, TaskState state);
 
     private:
         void EnqueueLocked(TaskPtr&& task, std::unique_lock<std::mutex>& lock);
