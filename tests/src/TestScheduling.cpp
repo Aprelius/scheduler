@@ -11,6 +11,7 @@ using namespace Scheduler::Lib;
 TEST(SchedularStartup, InitializeAndShutdown)
 {
     SchedulerParams params;
+    params.executorParams.concurrency = 2;
     SchedulerPtr scheduler;
     ASSERT_EQ(TaskScheduler::Create(params, scheduler), E_SUCCESS);
     scheduler->Start();
@@ -34,6 +35,7 @@ TEST(SchedularStartup, InitializeAndShutdown)
 TEST(Scheduler, DependentTasks)
 {
     SchedulerParams params;
+    params.executorParams.concurrency = 2;
     SchedulerPtr scheduler;
     ASSERT_EQ(TaskScheduler::Create(params, scheduler), E_SUCCESS);
     scheduler->Start();
@@ -64,6 +66,7 @@ TEST(Scheduler, DependentTasks)
 TEST(Scheduler, ProcessChainAndDependents)
 {
     SchedulerParams params;
+    params.executorParams.concurrency = 2;
     SchedulerPtr scheduler;
     ASSERT_EQ(TaskScheduler::Create(params, scheduler), E_SUCCESS);
     scheduler->Start();
