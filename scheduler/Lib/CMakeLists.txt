@@ -30,7 +30,7 @@ target_include_directories(Scheduler-Lib
 FILE(GLOB_RECURSE HEADERS ${PROJECT_INCLUDE_DIR} "include/*.h")
 FILE(GLOB_RECURSE INTERNAL_H ${PROJECT_INTERNAL_DIR} "internal/*.h")
 # Create the source group folders for the different source files
-FILE(GLOB SOURCES "src/*.cpp")
+FILE(GLOB_RECURSE SOURCES ${PROJECT_SOURCE_DIR} "src/*.cpp")
 
 target_link_libraries(Scheduler-Lib
     PUBLIC Scheduler::Common)
