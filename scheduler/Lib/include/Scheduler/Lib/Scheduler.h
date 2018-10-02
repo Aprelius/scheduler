@@ -68,7 +68,8 @@ namespace Lib {
 
         template<typename T, typename
             std::enable_if<
-                std::is_base_of<Chain, T>::value, T>::type* = nullptr>
+                std::is_base_of<Chain, T>::value
+                && std::is_convertible<T*, Task*>::value, T>::type* = nullptr>
         void Enqueue(std::shared_ptr<T>& chain)
         {
             Enqueue(chain.get());
