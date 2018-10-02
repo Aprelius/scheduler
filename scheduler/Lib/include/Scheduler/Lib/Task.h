@@ -50,6 +50,9 @@ namespace Lib {
         friend class TaskRunner;
         friend class StandardTaskScheduler;
 
+        Task(const Task&) = delete;
+        Task& operator=(const Task&) = delete;
+
         template<typename T, typename... Args>
         friend std::shared_ptr<typename std::enable_if<std::is_base_of<Task, T>::value, T>::type>
         After(const Clock::time_point& point, Args&& ...args);
