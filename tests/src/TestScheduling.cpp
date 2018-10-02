@@ -136,7 +136,7 @@ TEST(Scheduler, ProcessGroupAndDependents)
     Console(std::cout) << "taskC = " << taskC->ToString(true) << '\n';
     Console(std::cout) << "taskD = " << taskD->ToString(true) << '\n';
 
-    taskD->Depends(group.get());
+    taskD->Depends(group);
     ASSERT_TRUE(taskA->IsValid());
     ASSERT_TRUE(group->IsValid());
     ASSERT_TRUE(taskD->Requires(group.get()));

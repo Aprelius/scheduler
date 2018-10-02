@@ -92,7 +92,27 @@ namespace Lib {
         /// this task may begin. ANy changes to the dependency list may be
         /// chained however you should always check IsValid before proceeding to
         /// ensure the dependency chain is a valid run-path.
-        inline Task* Depends(TaskPtr& task) { return Depends(task.get()); }
+        template<typename T, typename
+            std::enable_if<
+                std::is_base_of<Task, T>::value
+                && !std::is_base_of<Chain, T>::value, T>::type* = nullptr>
+        T* Depends(std::shared_ptr<T>& task)
+        {
+            return Depends(task.get());
+        }
+
+        /// Add the given task a dependency that must complete executing before
+        /// this task may begin. ANy changes to the dependency list may be
+        /// chained however you should always check IsValid before proceeding to
+        /// ensure the dependency chain is a valid run-path.
+        template<typename T, typename
+            std::enable_if<
+                std::is_base_of<Chain, T>::value
+                && std::is_convertible<T*, Task*>::value, T>::type* = nullptr>
+        T* Depends(std::shared_ptr<T>& chain)
+        {
+            return reinterpret_cast<T*>(Depends(chain.get()));
+        }
 
         /// Return a vector of the tasks which are depended on by this task
         /// for completion.
