@@ -44,6 +44,12 @@ bool Scheduler::Lib::Chain::IsChild(const UUID& id) const
     return false;
 }
 
+Scheduler::Lib::TaskResult Scheduler::Lib::Chain::Run()
+{
+    /// This should return the state of the chain, SUCCESS or FAILURE.
+    return RESULT_SUCCESS;
+}
+
 Scheduler::Lib::ChainPtr Scheduler::Lib::Chain::shared_from_this()
 {
     return std::static_pointer_cast<Chain>(Task::shared_from_this());

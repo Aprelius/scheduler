@@ -18,25 +18,7 @@ namespace Lib {
     class Chain : public Task
     {
         friend class StandardTaskScheduler;
-
-        template<typename T, typename... Args>
-        friend std::shared_ptr<typename std::enable_if<std::is_base_of<Task, T>::value, T>::type>
-        After(const Clock::time_point& point, Args&& ...args);
-
-        template<typename T, typename... Args>
-        friend std::shared_ptr<typename std::enable_if<std::is_base_of<Task, T>::value, T>::type>
-        Before(const Clock::time_point& point, Args&& ...args);
-
-        template<typename T, typename... Args>
-        friend std::shared_ptr<typename std::enable_if<std::is_base_of<Task, T>::value, T>::type>
-        Between(
-            const Clock::time_point& after,
-            const Clock::time_point& before,
-            Args&& ...args);
-
-        template<typename T, typename... Args>
-        friend std::shared_ptr<typename std::enable_if<std::is_base_of<Task, T>::value, T>::type>
-        MakeTask(Args&& ...args);
+        friend class Task;
 
     public:
 
@@ -127,6 +109,8 @@ namespace Lib {
                 this->Add(task);
             }, std::forward<Args>(args)...);
         }
+
+        TaskResult Run();
 
     private:
         std::vector<TaskPtr> m_children;

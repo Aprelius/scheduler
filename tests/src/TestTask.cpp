@@ -2,6 +2,7 @@
 
 #include <Scheduler/Lib/Task.h>
 #include <Scheduler/Tests/ClockUtils.h>
+#include <Scheduler/Tests/Tasks.h>
 #include <iostream>
 
 using std::chrono::seconds;
@@ -21,7 +22,7 @@ Clock::time_point Scheduler::Tests::Past(const Clock::duration& length)
 
 TEST(TaskConstruction, CreateSimpleTask)
 {
-    TaskPtr task = MakeTask<Task>();
+    TaskPtr task = Task::Create<Success>();
     ASSERT_EQ(task->GetState(), TaskState::NEW);
     ASSERT_FALSE(task->IsExpired());
     ASSERT_FALSE(task->IsPremature());
@@ -30,12 +31,12 @@ TEST(TaskConstruction, CreateSimpleTask)
 
 TEST(TaskConstruction, CreateSimpleAfterTask)
 {
-    TaskPtr taskA = After<Task>(Future(seconds(10)));
+    TaskPtr taskA = Task::After<Success>(Future(seconds(10)));
     ASSERT_EQ(taskA->GetState(), TaskState::NEW);
     ASSERT_TRUE(taskA->IsPremature());
     ASSERT_FALSE(taskA->IsExpired());
 
-    TaskPtr taskB = After<Task>(Past(seconds(10)));
+    TaskPtr taskB = Task::After<Success>(Past(seconds(10)));
     ASSERT_EQ(taskB->GetState(), TaskState::NEW);
     ASSERT_FALSE(taskB->IsPremature());
     ASSERT_FALSE(taskB->IsExpired());
@@ -43,12 +44,12 @@ TEST(TaskConstruction, CreateSimpleAfterTask)
 
 TEST(TaskConstruction, CreateSimpleBeforeTask)
 {
-    TaskPtr taskA = Before<Task>(Future(seconds(10)));
+    TaskPtr taskA = Task::Before<Success>(Future(seconds(10)));
     ASSERT_EQ(taskA->GetState(), TaskState::NEW);
     ASSERT_FALSE(taskA->IsPremature());
     ASSERT_FALSE(taskA->IsExpired());
 
-    TaskPtr taskB = Before<Task>(Past(seconds(10)));
+    TaskPtr taskB = Task::Before<Success>(Past(seconds(10)));
     ASSERT_EQ(taskB->GetState(), TaskState::NEW);
     ASSERT_FALSE(taskB->IsPremature());
     ASSERT_TRUE(taskB->IsExpired());
@@ -56,17 +57,17 @@ TEST(TaskConstruction, CreateSimpleBeforeTask)
 
 TEST(TaskConstruction, CreateSimpleBetweenTask)
 {
-    TaskPtr taskA = Between<Task>(Clock::now(), Future(seconds(10)));
+    TaskPtr taskA = Task::Between<Success>(Clock::now(), Future(seconds(10)));
     ASSERT_EQ(taskA->GetState(), TaskState::NEW);
     ASSERT_FALSE(taskA->IsPremature());
     ASSERT_FALSE(taskA->IsExpired());
 
-    TaskPtr taskB = Between<Task>(Future(seconds(10)), Future(seconds(15)));
+    TaskPtr taskB = Task::Between<Success>(Future(seconds(10)), Future(seconds(15)));
     ASSERT_EQ(taskB->GetState(), TaskState::NEW);
     ASSERT_TRUE(taskB->IsPremature());
     ASSERT_FALSE(taskB->IsExpired());
 
-    TaskPtr taskC = Between<Task>(Past(seconds(15)), Past(seconds(10)));
+    TaskPtr taskC = Task::Between<Success>(Past(seconds(15)), Past(seconds(10)));
     ASSERT_EQ(taskC->GetState(), TaskState::NEW);
     ASSERT_FALSE(taskC->IsPremature());
     ASSERT_TRUE(taskC->IsExpired());
@@ -74,9 +75,9 @@ TEST(TaskConstruction, CreateSimpleBetweenTask)
 
 TEST(TaskDependencies, SimpleDependencies)
 {
-    TaskPtr taskA = MakeTask<Task>(),
-            taskB = MakeTask<Task>(),
-            taskC = MakeTask<Task>();
+    TaskPtr taskA = Task::Create<Success>(),
+            taskB = Task::Create<Success>(),
+            taskC = Task::Create<Success>();
 
     ASSERT_FALSE(taskA->HasDependencies());
     ASSERT_FALSE(taskB->HasDependencies());
@@ -99,9 +100,9 @@ TEST(TaskDependencies, SimpleDependencies)
 
 TEST(TaskDependencies, CircularDependencies)
 {
-    TaskPtr taskA = MakeTask<Task>(),
-            taskB = MakeTask<Task>(),
-            taskC = MakeTask<Task>();
+    TaskPtr taskA = Task::Create<Success>(),
+            taskB = Task::Create<Success>(),
+            taskC = Task::Create<Success>();
 
     ASSERT_FALSE(taskA->HasDependencies());
     ASSERT_FALSE(taskB->HasDependencies());

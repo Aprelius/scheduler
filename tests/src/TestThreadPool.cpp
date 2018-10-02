@@ -3,9 +3,11 @@
 #include <Scheduler/Lib/Executor.h>
 #include <Scheduler/Lib/Task.h>
 #include <Scheduler/Lib/TaskRunner.h>
+#include <Scheduler/Tests/Tasks.h>
 
 using namespace Scheduler;
 using namespace Scheduler::Lib;
+using namespace Scheduler::Tests;
 
 TEST(ExecutorInit, StartupAndShutdown)
 {
@@ -16,7 +18,7 @@ TEST(ExecutorInit, StartupAndShutdown)
     ExecutorPtr executor;
     ASSERT_EQ(Executor::Create(params, executor), E_SUCCESS);
 
-    TaskPtr task = MakeTask<Task>();
+    TaskPtr task = Task::Create<Success>();
     {
         TaskPtr t = task->shared_from_this();
         TaskRunnerPtr runner = std::make_shared<TaskRunner>(

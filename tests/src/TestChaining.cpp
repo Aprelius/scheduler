@@ -4,6 +4,7 @@
 #include <Scheduler/Lib/Chain.h>
 #include <Scheduler/Lib/Task.h>
 #include <Scheduler/Tests/ClockUtils.h>
+#include <Scheduler/Tests/Tasks.h>
 
 using namespace Scheduler;
 using namespace Scheduler::Lib;
@@ -12,11 +13,11 @@ using std::chrono::seconds;
 
 TEST(ChainingTasks, ByContruction)
 {
-    TaskPtr taskA = MakeTask<Task>(),
-            taskB = MakeTask<Task>(),
-            taskC = MakeTask<Task>();
+    TaskPtr taskA = Task::Create<Success>(),
+            taskB = Task::Create<Success>(),
+            taskC = Task::Create<Success>();
 
-    ChainPtr chain = MakeTask<Chain>(taskA, taskB, taskC);
+    ChainPtr chain = Task::Create<Chain>(taskA, taskB, taskC);
 
     // Chain[taskA -> taskB -> taskC]
 
@@ -36,10 +37,10 @@ TEST(ChainingTasks, ByContruction)
 
 TEST(ChainingTasks, CircularInvalidBeforeConstruction)
 {
-    TaskPtr taskA = MakeTask<Task>(),
-            taskB = MakeTask<Task>(),
-            taskC = MakeTask<Task>(),
-            taskD = MakeTask<Task>();
+    TaskPtr taskA = Task::Create<Success>(),
+            taskB = Task::Create<Success>(),
+            taskC = Task::Create<Success>(),
+            taskD = Task::Create<Success>();
 
     // taskA
     //      \
@@ -84,18 +85,18 @@ TEST(ChainingTasks, CircularInvalidBeforeConstruction)
 
     // taskA and taskC are already invalid by the time the chain
     // is constructed.
-    ChainPtr chain = MakeTask<Chain>(taskA, taskC, taskD);
+    ChainPtr chain = Task::Create<Chain>(taskA, taskC, taskD);
     ASSERT_FALSE(chain->IsValid());
     Console(std::cout) << chain << '\n';
 }
 
 TEST(ChainingTasks, InvalidMultiLevelCircular)
 {
-    TaskPtr taskA = MakeTask<Task>(),
-            taskB = MakeTask<Task>(),
-            taskC = MakeTask<Task>(),
-            taskD = MakeTask<Task>(),
-            taskE = MakeTask<Task>();
+    TaskPtr taskA = Task::Create<Success>(),
+            taskB = Task::Create<Success>(),
+            taskC = Task::Create<Success>(),
+            taskD = Task::Create<Success>(),
+            taskE = Task::Create<Success>();
 
     Console(std::cout) << "TaskA = " << taskA << '\n';
     Console(std::cout) << "TaskB = " << taskB << '\n';
@@ -106,33 +107,33 @@ TEST(ChainingTasks, InvalidMultiLevelCircular)
     taskA->Depends(taskD);
     ASSERT_TRUE(taskA->Requires(taskD));
 
-    ChainPtr chain = MakeTask<Chain>(taskA, taskB, taskC, taskD);
+    ChainPtr chain = Task::Create<Chain>(taskA, taskB, taskC, taskD);
     ASSERT_FALSE(chain->IsValid());
     Console(std::cout) << chain << '\n';
 }
 
 TEST(ChainingTasks, InvalidByConstruction)
 {
-    TaskPtr taskA = MakeTask<Task>(),
-            taskB = MakeTask<Task>(),
-            taskC = MakeTask<Task>();
+    TaskPtr taskA = Task::Create<Success>(),
+            taskB = Task::Create<Success>(),
+            taskC = Task::Create<Success>();
 
     taskB->Depends(taskA);
     ASSERT_TRUE(taskA->IsValid());
     ASSERT_TRUE(taskB->IsValid());
 
-    ChainPtr chain = MakeTask<Chain>(taskB, taskA, taskC);
+    ChainPtr chain = Task::Create<Chain>(taskB, taskA, taskC);
     ASSERT_FALSE(chain->IsValid());
     Console(std::cout) << chain << '\n';
 }
 
 TEST(ChainingTaskConstructors, AfterContruction)
 {
-    TaskPtr taskA = MakeTask<Task>(),
-            taskB = MakeTask<Task>(),
-            taskC = MakeTask<Task>();
+    TaskPtr taskA = Task::Create<Success>(),
+            taskB = Task::Create<Success>(),
+            taskC = Task::Create<Success>();
 
-    ChainPtr chain = After<Chain>(
+    ChainPtr chain = Task::After<Chain>(
         Future(seconds(10)),
         taskA, taskB, taskC);
 
@@ -158,11 +159,11 @@ TEST(ChainingTaskConstructors, AfterContruction)
 
 TEST(ChainingTaskConstructors, BeforeContruction)
 {
-    TaskPtr taskA = MakeTask<Task>(),
-            taskB = MakeTask<Task>(),
-            taskC = MakeTask<Task>();
+    TaskPtr taskA = Task::Create<Success>(),
+            taskB = Task::Create<Success>(),
+            taskC = Task::Create<Success>();
 
-    ChainPtr chain = Before<Chain>(
+    ChainPtr chain = Task::Before<Chain>(
         Future(seconds(10)),
         taskA, taskB, taskC);
 

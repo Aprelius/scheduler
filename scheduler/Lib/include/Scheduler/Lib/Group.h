@@ -5,29 +5,15 @@
 namespace Scheduler {
 namespace Lib {
 
+    class StandardTaskScheduler;
+
     class Group;
     typedef std::shared_ptr<Group> GroupPtr;
 
     class Group : public Chain
     {
-        template<typename T, typename... Args>
-        friend std::shared_ptr<typename std::enable_if<std::is_base_of<Task, T>::value, T>::type>
-        After(const Clock::time_point& point, Args&& ...args);
-
-        template<typename T, typename... Args>
-        friend std::shared_ptr<typename std::enable_if<std::is_base_of<Task, T>::value, T>::type>
-        Before(const Clock::time_point& point, Args&& ...args);
-
-        template<typename T, typename... Args>
-        friend std::shared_ptr<typename std::enable_if<std::is_base_of<Task, T>::value, T>::type>
-        Between(
-            const Clock::time_point& after,
-            const Clock::time_point& before,
-            Args&& ...args);
-
-        template<typename T, typename... Args>
-        friend std::shared_ptr<typename std::enable_if<std::is_base_of<Task, T>::value, T>::type>
-        MakeTask(Args&& ...args);
+        friend class StandardTaskScheduler;
+        friend class Task;
 
     public:
         ~Group();

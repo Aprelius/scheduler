@@ -5,9 +5,11 @@
 #include <Scheduler/Lib/Group.h>
 #include <Scheduler/Lib/Scheduler.h>
 #include <Scheduler/Lib/Task.h>
+#include <Scheduler/Tests/Tasks.h>
 
 using namespace Scheduler;
 using namespace Scheduler::Lib;
+using namespace Scheduler::Tests;
 
 TEST(SchedularStartup, InitializeAndShutdown)
 {
@@ -17,8 +19,8 @@ TEST(SchedularStartup, InitializeAndShutdown)
     ASSERT_EQ(TaskScheduler::Create(params, scheduler), E_SUCCESS);
     scheduler->Start();
 
-    TaskPtr taskA = MakeTask<Task>(),
-            taskB = MakeTask<Task>();
+    TaskPtr taskA = Task::Create<Success>(),
+            taskB = Task::Create<Success>();
 
     scheduler->Enqueue(taskA);
     scheduler->Enqueue(taskB);
@@ -41,8 +43,8 @@ TEST(Scheduler, DependentTasks)
     ASSERT_EQ(TaskScheduler::Create(params, scheduler), E_SUCCESS);
     scheduler->Start();
 
-    TaskPtr taskA = MakeTask<Task>(),
-            taskB = MakeTask<Task>();
+    TaskPtr taskA = Task::Create<Success>(),
+            taskB = Task::Create<Success>();
 
     Console(std::cout) << "taskA = " << taskA->ToString(true) << '\n';
     Console(std::cout) << "taskB = " << taskB->ToString(true) << '\n';
@@ -72,12 +74,12 @@ TEST(Scheduler, ProcessChainAndDependents)
     ASSERT_EQ(TaskScheduler::Create(params, scheduler), E_SUCCESS);
     scheduler->Start();
 
-    TaskPtr taskA = MakeTask<Task>(),
-            taskB = MakeTask<Task>(),
-            taskC = MakeTask<Task>(),
-            taskD = MakeTask<Task>();
+    TaskPtr taskA = Task::Create<Success>(),
+            taskB = Task::Create<Success>(),
+            taskC = Task::Create<Success>(),
+            taskD = Task::Create<Success>();
 
-    ChainPtr chain = MakeTask<Chain>(taskA, taskB, taskC);
+    ChainPtr chain = Task::Create<Chain>(taskA, taskB, taskC);
 
     Console(std::cout) << "taskA = " << taskA->ToString(true) << '\n';
     Console(std::cout) << "taskB = " << taskB->ToString(true) << '\n';
@@ -124,12 +126,12 @@ TEST(Scheduler, ProcessGroupAndDependents)
     ASSERT_EQ(TaskScheduler::Create(params, scheduler), E_SUCCESS);
     scheduler->Start();
 
-    TaskPtr taskA = MakeTask<Task>(),
-            taskB = MakeTask<Task>(),
-            taskC = MakeTask<Task>(),
-            taskD = MakeTask<Task>();
+    TaskPtr taskA = Task::Create<Success>(),
+            taskB = Task::Create<Success>(),
+            taskC = Task::Create<Success>(),
+            taskD = Task::Create<Success>();
 
-    GroupPtr group = MakeTask<Group>(taskA, taskB, taskC);
+    GroupPtr group = Task::Create<Group>(taskA, taskB, taskC);
 
     Console(std::cout) << "taskA = " << taskA->ToString(true) << '\n';
     Console(std::cout) << "taskB = " << taskB->ToString(true) << '\n';

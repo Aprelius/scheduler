@@ -53,26 +53,47 @@ namespace Lib {
         Task(const Task&) = delete;
         Task& operator=(const Task&) = delete;
 
+    public:
+        /// Create a task that should not execute after a given time.
+        /// It is expected that the time point given be in the future and
+        /// creating one in the past will generate a bad task.
         template<typename T, typename... Args>
-        friend std::shared_ptr<typename std::enable_if<std::is_base_of<Task, T>::value, T>::type>
-        After(const Clock::time_point& point, Args&& ...args);
+        static std::shared_ptr<typename std::enable_if<std::is_base_of<Task, T>::value, T>::type>
+        After(const Clock::time_point& point, Args&& ...args)
+        {
+            return std::shared_ptr<T>(new T(Clock::time_point::max(), point, std::forward<Args>(args)...));
+        }
 
+        /// Create a Task that should not execute before a given time.
+        /// It is expected that the time point given be in the future and
+        /// creating one in the past will generate a bad task.
         template<typename T, typename... Args>
-        friend std::shared_ptr<typename std::enable_if<std::is_base_of<Task, T>::value, T>::type>
-        Before(const Clock::time_point& point, Args&& ...args);
+        static std::shared_ptr<typename std::enable_if<std::is_base_of<Task, T>::value, T>::type>
+        Before(const Clock::time_point& point, Args&& ...args)
+        {
+            return std::shared_ptr<T>(new T(point, Clock::time_point::max(), std::forward<Args>(args)...));
+        }
 
+        /// Create a task that should execute between two given time
+        /// points. Both values should follow the rules for the
+        /// individual constructors in be in the future or now.
         template<typename T, typename... Args>
-        friend std::shared_ptr<typename std::enable_if<std::is_base_of<Task, T>::value, T>::type>
+        static std::shared_ptr<typename std::enable_if<std::is_base_of<Task, T>::value, T>::type>
         Between(
             const Clock::time_point& after,
             const Clock::time_point& before,
-            Args&& ...args);
+            Args&& ...args)
+        {
+            return std::shared_ptr<T>(new T(before, after, std::forward<Args>(args)...));
+        }
 
+        /// Create a simple task that has no time boundaries for execution.
         template<typename T, typename... Args>
-        friend std::shared_ptr<typename std::enable_if<std::is_base_of<Task, T>::value, T>::type>
-        MakeTask(Args&& ...args);
-
-    public:
+        static std::shared_ptr<typename std::enable_if<std::is_base_of<Task, T>::value, T>::type>
+        Create(Args&& ...args)
+        {
+            return std::shared_ptr<T>(new T(std::forward<Args>(args)...));
+        }
 
         /// The destructor.
         virtual ~Task();
@@ -216,46 +237,29 @@ namespace Lib {
 
     std::ostream& operator<<(std::ostream& o, const TaskPtr& task);
 
-    /// Create a task that should not execute after a given time.
-    /// It is expected that the time point given be in the future and
-    /// creating one in the past will generate a bad task.
-    template<typename T, typename... Args>
-    std::shared_ptr<typename std::enable_if<std::is_base_of<Task, T>::value, T>::type>
-    After(const Clock::time_point& point, Args&& ...args)
+    template<typename T>
+    class RetryableTask : public Task
     {
-        return std::shared_ptr<T>(new T(Clock::time_point::max(), point, std::forward<Args>(args)...));
-    }
+        friend class Task;
 
-    /// Create a Task that should not execute before a given time.
-    /// It is expected that the time point given be in the future and
-    /// creating one in the past will generate a bad task.
-    template<typename T, typename... Args>
-    std::shared_ptr<typename std::enable_if<std::is_base_of<Task, T>::value, T>::type>
-    Before(const Clock::time_point& point, Args&& ...args)
-    {
-        return std::shared_ptr<T>(new T(point, Clock::time_point::max(), std::forward<Args>(args)...));
-    }
+    public:
+        ~RetryableTask<T>() { }
 
-    /// Create a task that should execute between two given time
-    /// points. Both values should follow the rules for the
-    /// individual constructors in be in the future or now.
-    template<typename T, typename... Args>
-    std::shared_ptr<typename std::enable_if<std::is_base_of<Task, T>::value, T>::type>
-    Between(
-        const Clock::time_point& after,
-        const Clock::time_point& before,
-        Args&& ...args)
-    {
-        return std::shared_ptr<T>(new T(before, after, std::forward<Args>(args)...));
-    }
+    protected:
+        using Task::Task;
+    };
 
-    /// Create a simple task that has no time boundaries for execution.
-    template<typename T, typename... Args>
-    std::shared_ptr<typename std::enable_if<std::is_base_of<Task, T>::value, T>::type>
-    MakeTask(Args&& ...args)
+    template<typename T>
+    class ImmutableTask : public RetryableTask<T>
     {
-        return std::shared_ptr<T>(new T(std::forward<Args>(args)...));
-    }
+        friend class Task;
+
+    public:
+        ~ImmutableTask<T>() { }
+
+    protected:
+        using RetryableTask<T>::RetryableTask;
+    };
 
 }  // namespace Lib
 }  // nmaespace Scheduler

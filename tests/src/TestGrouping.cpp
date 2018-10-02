@@ -4,6 +4,7 @@
 #include <Scheduler/Lib/Group.h>
 #include <Scheduler/Lib/Task.h>
 #include <Scheduler/Tests/ClockUtils.h>
+#include <Scheduler/Tests/Tasks.h>
 
 using namespace Scheduler;
 using namespace Scheduler::Lib;
@@ -12,11 +13,11 @@ using std::chrono::seconds;
 
 TEST(GroupingTasks, ByContruction)
 {
-    TaskPtr taskA = MakeTask<Task>(),
-            taskB = MakeTask<Task>(),
-            taskC = MakeTask<Task>();
+    TaskPtr taskA = Task::Create<Success>(),
+            taskB = Task::Create<Success>(),
+            taskC = Task::Create<Success>();
 
-    GroupPtr group = MakeTask<Group>(taskA, taskB, taskC);
+    GroupPtr group = Task::Create<Group>(taskA, taskB, taskC);
 
     // Group[taskA -> taskB -> taskC]
 
@@ -37,10 +38,10 @@ TEST(GroupingTasks, ByContruction)
 
 TEST(GroupingTasks, CircularInvalidBeforeConstruction)
 {
-    TaskPtr taskA = MakeTask<Task>(),
-            taskB = MakeTask<Task>(),
-            taskC = MakeTask<Task>(),
-            taskD = MakeTask<Task>();
+    TaskPtr taskA = Task::Create<Success>(),
+            taskB = Task::Create<Success>(),
+            taskC = Task::Create<Success>(),
+            taskD = Task::Create<Success>();
 
     // taskA
     //      \
@@ -85,18 +86,18 @@ TEST(GroupingTasks, CircularInvalidBeforeConstruction)
 
     // taskA and taskC are already invalid by the time the group
     // is constructed.
-    GroupPtr group = MakeTask<Group>(taskA, taskC, taskD);
+    GroupPtr group = Task::Create<Group>(taskA, taskC, taskD);
     ASSERT_FALSE(group->IsValid());
     Console(std::cout) << group << '\n';
 }
 
 TEST(GroupingTasks, ValidMultiLevelCircular)
 {
-    TaskPtr taskA = MakeTask<Task>(),
-            taskB = MakeTask<Task>(),
-            taskC = MakeTask<Task>(),
-            taskD = MakeTask<Task>(),
-            taskE = MakeTask<Task>();
+    TaskPtr taskA = Task::Create<Success>(),
+            taskB = Task::Create<Success>(),
+            taskC = Task::Create<Success>(),
+            taskD = Task::Create<Success>(),
+            taskE = Task::Create<Success>();
 
     Console(std::cout) << "TaskA = " << taskA << '\n';
     Console(std::cout) << "TaskB = " << taskB << '\n';
@@ -110,18 +111,18 @@ TEST(GroupingTasks, ValidMultiLevelCircular)
     // This is completely valid because the Group will execute the entire
     // batch of tasks and properly handle the added ordering.
 
-    GroupPtr group = MakeTask<Group>(taskA, taskB, taskC, taskD);
+    GroupPtr group = Task::Create<Group>(taskA, taskB, taskC, taskD);
     ASSERT_TRUE(group->IsValid());
     Console(std::cout) << group << '\n';
 }
 
 TEST(GroupingTaskConstructors, AfterContruction)
 {
-    TaskPtr taskA = MakeTask<Task>(),
-            taskB = MakeTask<Task>(),
-            taskC = MakeTask<Task>();
+    TaskPtr taskA = Task::Create<Success>(),
+            taskB = Task::Create<Success>(),
+            taskC = Task::Create<Success>();
 
-    GroupPtr group = After<Group>(
+    GroupPtr group = Task::After<Group>(
         Future(seconds(10)),
         taskA, taskB, taskC);
 
@@ -147,11 +148,11 @@ TEST(GroupingTaskConstructors, AfterContruction)
 
 TEST(GroupingTaskConstructors, BeforeContruction)
 {
-    TaskPtr taskA = MakeTask<Task>(),
-            taskB = MakeTask<Task>(),
-            taskC = MakeTask<Task>();
+    TaskPtr taskA = Task::Create<Success>(),
+            taskB = Task::Create<Success>(),
+            taskC = Task::Create<Success>();
 
-    GroupPtr group = Before<Group>(
+    GroupPtr group = Task::Before<Group>(
         Future(seconds(10)),
         taskA, taskB, taskC);
 
