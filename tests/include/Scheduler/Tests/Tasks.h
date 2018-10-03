@@ -5,13 +5,25 @@
 namespace Scheduler {
 namespace Tests {
 
-    class Success : public Lib::RetryableTask<Success>
+    class Failure : public Lib::ImmutableTask<Failure>
+    {
+    public:
+        ~Failure() { }
+
+    protected:
+        using Lib::ImmutableTask<Failure>::ImmutableTask;
+
+    private:
+        Lib::TaskResult Run() { return Lib::RESULT_FAILURE; }
+    };
+
+    class Success : public Lib::ImmutableTask<Success>
     {
     public:
         ~Success() { }
 
     protected:
-        using Lib::RetryableTask<Success>::RetryableTask;
+        using Lib::ImmutableTask<Success>::ImmutableTask;
 
     private:
         Lib::TaskResult Run() { return Lib::RESULT_SUCCESS; }
