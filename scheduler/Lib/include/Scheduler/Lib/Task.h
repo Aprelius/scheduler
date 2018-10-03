@@ -138,13 +138,6 @@ namespace Lib {
             return reinterpret_cast<T*>(Depends(chain.get()));
         }
 
-        /// Return a vector of the tasks which are depended on by this task
-        /// for completion.
-        const std::vector<TaskPtr>& GetDependencies() const
-        {
-            return m_dependencies;
-        }
-
         /// Retrieve teh state for the task.
         TaskState GetState() const { return m_state; }
 
@@ -215,6 +208,13 @@ namespace Lib {
         void SetValid(bool status);
 
     private:
+        /// Return a vector of the tasks which are depended on by this task
+        /// for completion.
+        const std::vector<TaskPtr>& GetDependencies() const
+        {
+            return m_dependencies;
+        }
+
         void SetState(TaskState state);
         void SetStateLocked(
             TaskState state,
