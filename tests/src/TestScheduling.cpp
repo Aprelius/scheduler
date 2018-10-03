@@ -118,6 +118,89 @@ TEST(Scheduler, ProcessChainAndDependents)
     ASSERT_TRUE(scheduler->IsShutdown());
 }
 
+TEST(Scheduler, ProcessChainAndDependentsWithFinalFailure)
+{
+    SchedulerParams params;
+    params.executorParams.concurrency = 2;
+    SchedulerPtr scheduler;
+    ASSERT_EQ(TaskScheduler::Create(params, scheduler), E_SUCCESS);
+    scheduler->Start();
+
+    TaskPtr taskA = Task::Create<Success>(),
+            taskB = Task::Create<Success>(),
+            taskC = Task::Create<Failure>(),
+            taskD = Task::Create<Success>();
+
+    ChainPtr chain = Task::Create<Chain>(taskA, taskB, taskC);
+
+    Console(std::cout) << "taskA = " << taskA->ToString(true) << '\n';
+    Console(std::cout) << "taskB = " << taskB->ToString(true) << '\n';
+    Console(std::cout) << "taskC = " << taskC->ToString(true) << '\n';
+    Console(std::cout) << "taskD = " << taskD->ToString(true) << '\n';
+
+    taskD->Depends(chain.get());
+    ASSERT_TRUE(taskA->IsValid());
+    ASSERT_TRUE(chain->IsValid());
+    ASSERT_TRUE(taskD->Requires(chain.get()));
+
+    scheduler->Enqueue(taskD);
+    scheduler->Enqueue(chain);
+
+    chain->Wait();
+    ASSERT_TRUE(chain->IsComplete());
+    ASSERT_EQ(TaskState::FAILED, taskC->GetState());
+    ASSERT_EQ(TaskState::FAILED, chain->GetState());
+
+    scheduler->Shutdown(true);
+    ASSERT_TRUE(scheduler->IsShutdown());
+}
+
+TEST(Scheduler, ProcessChainAndDependentsWithFirstFailure)
+{
+    SchedulerParams params;
+    params.executorParams.concurrency = 2;
+    SchedulerPtr scheduler;
+    ASSERT_EQ(TaskScheduler::Create(params, scheduler), E_SUCCESS);
+    scheduler->Start();
+
+    TaskPtr taskA = Task::Create<Failure>(),
+            taskB = Task::Create<Success>(),
+            taskC = Task::Create<Success>(),
+            taskD = Task::Create<Success>();
+
+    ChainPtr chain = Task::Create<Chain>(taskA, taskB, taskC);
+
+    Console(std::cout) << "chain = " << chain->ToString(true) << '\n';
+    Console(std::cout) << "taskA = " << taskA->ToString(true) << '\n';
+    Console(std::cout) << "taskB = " << taskB->ToString(true) << '\n';
+    Console(std::cout) << "taskC = " << taskC->ToString(true) << '\n';
+    Console(std::cout) << "taskD = " << taskD->ToString(true) << '\n';
+
+    taskD->Depends(chain.get());
+    ASSERT_TRUE(taskA->IsValid());
+    ASSERT_TRUE(chain->IsValid());
+    ASSERT_TRUE(taskD->Requires(chain.get()));
+
+    scheduler->Enqueue(taskD);
+    scheduler->Enqueue(chain);
+
+    taskA->Wait();
+    ASSERT_EQ(TaskState::FAILED, taskA->GetState());
+    taskB->Wait();
+    ASSERT_EQ(TaskState::FAILED, taskB->GetState());
+    taskC->Wait();
+    ASSERT_EQ(TaskState::FAILED, taskC->GetState());
+    chain->Wait();
+    ASSERT_TRUE(chain->IsComplete());
+    ASSERT_EQ(TaskState::FAILED, chain->GetState());
+
+    taskD->Wait();
+    ASSERT_EQ(TaskState::FAILED, taskD->GetState());
+
+    scheduler->Shutdown(true);
+    ASSERT_TRUE(scheduler->IsShutdown());
+}
+
 TEST(Scheduler, ProcessGroupAndDependents)
 {
     SchedulerParams params;
@@ -165,6 +248,50 @@ TEST(Scheduler, ProcessGroupAndDependents)
     taskD->Wait();
     ASSERT_EQ(taskD->GetState(), TaskState::SUCCESS);
     Console(std::cout) << "taskD complete\n";
+
+    scheduler->Shutdown(true);
+    ASSERT_TRUE(scheduler->IsShutdown());
+}
+
+TEST(Scheduler, ProcessGroupAndDependentsWithFirstFailure)
+{
+    SchedulerParams params;
+    params.executorParams.concurrency = 2;
+    SchedulerPtr scheduler;
+    ASSERT_EQ(TaskScheduler::Create(params, scheduler), E_SUCCESS);
+    scheduler->Start();
+
+    TaskPtr taskA = Task::Create<Failure>(),
+            taskB = Task::Create<Success>(),
+            taskC = Task::Create<Success>(),
+            taskD = Task::Create<Success>();
+
+    GroupPtr group = Task::Create<Group>(taskA, taskB, taskC);
+
+    Console(std::cout) << "group = " << group->ToString(true) << '\n';
+    Console(std::cout) << "taskA = " << taskA->ToString(true) << '\n';
+    Console(std::cout) << "taskB = " << taskB->ToString(true) << '\n';
+    Console(std::cout) << "taskC = " << taskC->ToString(true) << '\n';
+    Console(std::cout) << "taskD = " << taskD->ToString(true) << '\n';
+
+    taskD->Depends(group.get());
+    ASSERT_TRUE(taskA->IsValid());
+    ASSERT_TRUE(group->IsValid());
+    ASSERT_TRUE(taskD->Requires(group));
+
+    scheduler->Enqueue(taskD);
+    scheduler->Enqueue(group);
+
+    taskA->Wait();
+    ASSERT_EQ(TaskState::FAILED, taskA->GetState());
+    taskB->Wait();
+    taskC->Wait();
+    group->Wait();
+    ASSERT_TRUE(group->IsComplete());
+    ASSERT_EQ(TaskState::FAILED, group->GetState());
+
+    taskD->Wait();
+    ASSERT_EQ(TaskState::FAILED, taskD->GetState());
 
     scheduler->Shutdown(true);
     ASSERT_TRUE(scheduler->IsShutdown());

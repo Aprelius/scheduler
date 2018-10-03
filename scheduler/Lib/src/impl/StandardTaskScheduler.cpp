@@ -177,8 +177,15 @@ void Scheduler::Lib::StandardTaskScheduler::Notify(
             break;
         }
         case TaskState::FAILED:
-            assert(!"FAILED case not yet handled");
+        {
+            assert(m_pending.count(task->Id()) == 0);
+            assert(m_active.count(task->Id()) > 0);
+            m_active.erase(task->Id());
+            Console(std::cout) << "Task '" << task->Id()
+                << "' moving to FAILURE state\n";
+            task->Fail();
             break;
+        }
         default:
             assert(!"Unhandled TaskState state");
     }
@@ -281,7 +288,9 @@ bool Scheduler::Lib::StandardTaskScheduler::ProcessPendingQueue()
 
 bool Scheduler::Lib::StandardTaskScheduler::ProcessPendingTasks()
 {
-    if (m_pending.empty()) return true;
+    if (m_pending.empty()) return false;
+
+    bool failed = false;
 
     std::set<UUID> pending;
     for (const UUID& uuid : m_pending)
@@ -343,6 +352,7 @@ bool Scheduler::Lib::StandardTaskScheduler::ProcessPendingTasks()
                 Console(std::cout) << "Failing task '" << task->Id()
                     << "' due to failed dependency '" << dep->Id() << "'\n";
                 task->Fail();
+                failed = true;
                 break;
             }
             else if (dep->IsExpired())
@@ -351,6 +361,7 @@ bool Scheduler::Lib::StandardTaskScheduler::ProcessPendingTasks()
                 Console(std::cout) << "Failing task '" << task->Id()
                     << "' due to expired dependency '" << dep->Id() << "'\n";
                 task->Fail();
+                failed = true;
                 break;
             }
             else if (dep->GetState() == TaskState::NEW)
@@ -361,6 +372,7 @@ bool Scheduler::Lib::StandardTaskScheduler::ProcessPendingTasks()
                     Console(std::cout) << "Failing task '" << task->Id()
                         << "' due to time out on dependency\n";
                     task->Fail();
+                    failed = true;
                     break;
                 }
                 else
@@ -400,7 +412,7 @@ bool Scheduler::Lib::StandardTaskScheduler::ProcessPendingTasks()
     // After we determine the remaining pending UUIDs we can swap the stored
     // list for the newly generated one and move on.
     pending.swap(m_pending);
-    return true;
+    return failed;
 }
 
 void Scheduler::Lib::StandardTaskScheduler::PrunePrematureTasks()
@@ -433,7 +445,7 @@ bool Scheduler::Lib::StandardTaskScheduler::RunOnce()
     }
 
     if (!ProcessActiveTasks()) return false;
-    if (!ProcessPendingTasks()) return false;
+    if (ProcessPendingTasks()) return true;
 
     // Wait for new tasks to come in
     PrunePrematureTasks();
