@@ -12,6 +12,7 @@ Scheduler::Lib::Group* Scheduler::Lib::Group::Add(Task* task)
 
     if (IsModifiable()) return this;
     TaskPtr taskPtr = task->shared_from_this();
+    Depends(taskPtr);
     SetValid(taskPtr->IsValid());
     children.emplace(children.begin(), std::move(taskPtr));
     return this;
