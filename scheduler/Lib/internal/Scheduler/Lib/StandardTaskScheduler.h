@@ -72,12 +72,15 @@ namespace Lib {
 
         void PrunePrematureTasks();
 
-        // Scheduler is wiating for changes
-        bool m_waiting = false;
+        // Flag indiciating Notify has been called and the next Wait phase on
+        // the scheduler should be skipped.
+        bool m_notify = false;
         // Scheduler has been requested to shutdown
         bool m_shutdown = false;
         // Scheduler is shutdown
         bool m_shutdownComplete = false;
+        // Scheduler is waiting for changes
+        bool m_waiting = false;
 
         std::condition_variable m_cond;
         std::mutex m_mutex;

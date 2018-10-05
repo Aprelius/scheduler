@@ -205,6 +205,7 @@ void Scheduler::Lib::StandardTaskScheduler::NotifyLocked(
     std::unique_lock<std::mutex>& lock)
 {
     assert(lock.owns_lock());
+    m_notify = true;
     if (!m_waiting) return;
     m_cond.notify_all();
 }
@@ -323,6 +324,12 @@ bool Scheduler::Lib::StandardTaskScheduler::ProcessPendingTasks()
         }
         if (task->IsPremature())
         {
+            // This could happen that a task is retried and given an interval which
+            // has not yet occurred. If this is the case, we add it to the premature
+            // list.
+            if (m_premature.find(task->Id()) == m_premature.end())
+                m_premature.emplace(task->Id(), task->After());
+
             pending.insert(task->Id());
             continue;
         }
@@ -417,8 +424,13 @@ bool Scheduler::Lib::StandardTaskScheduler::ProcessPendingTasks()
 
 void Scheduler::Lib::StandardTaskScheduler::PrunePrematureTasks()
 {
-    for (auto iter = m_premature.begin(); iter != m_premature.end(); ++iter)
-        if (Clock::now() > iter->second) iter = m_premature.erase(iter);
+    for (auto iter = m_premature.begin(); iter != m_premature.end();)
+    {
+        if (Clock::now() < iter->second)
+            iter = m_premature.erase(iter);
+        else
+            ++iter;
+    }
 }
 
 bool Scheduler::Lib::StandardTaskScheduler::RunOnce()
@@ -448,11 +460,33 @@ bool Scheduler::Lib::StandardTaskScheduler::RunOnce()
     if (ProcessPendingTasks()) return true;
 
     // Wait for new tasks to come in
-    PrunePrematureTasks();
 
     assert(!m_waiting);
     m_waiting = true;
-    m_cond.wait(lock);
+    if (!m_notify)
+    {
+        Clock::duration timeout = std::chrono::milliseconds(-1);
+
+        if (!m_premature.empty())
+        {
+            Clock::time_point now = Clock::now();
+            Clock::time_point lowest = now;
+
+            for (const auto& point : m_premature)
+                if (point.second < lowest)
+                    lowest = point.second;
+
+            if (lowest < now)
+                timeout = std::chrono::seconds(0);
+            else
+                timeout = (lowest - now);
+        }
+
+        if (timeout > std::chrono::milliseconds(0))
+            m_cond.wait_for(lock, timeout);
+        else if (timeout == std::chrono::milliseconds(-1))
+            m_cond.wait(lock);
+    }
 
     // something woke up the scheduler
     // Once shutdown is trigger the Reporter, Executor, and Manager are
@@ -460,7 +494,9 @@ bool Scheduler::Lib::StandardTaskScheduler::RunOnce()
 
     assert(lock.owns_lock());
     assert(m_waiting);
+    m_notify = false;
     m_waiting = false;
+    PrunePrematureTasks();
     return true;
 }
 
