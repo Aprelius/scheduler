@@ -24,7 +24,8 @@ namespace Lib {
         PENDING,
         ACTIVE,
         FAILED,
-        CANCELLED
+        CANCELLED,
+        SUSPENDED
     };
 
     const char* TaskStateToStr(TaskState state);
