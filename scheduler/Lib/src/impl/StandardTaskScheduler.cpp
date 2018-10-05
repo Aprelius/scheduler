@@ -26,12 +26,14 @@ void Scheduler::Lib::StandardTaskScheduler::Enqueue(Chain* chain)
 
     if (!chain->IsValid())
     {
-        Console(std::cout) << "Invalid chain '" << chain->ToString(true) << "' enqued to scheduler\n";
+        Console(std::cout) << "Invalid chain '" << chain->ToString(true)
+            << "' enqued to scheduler\n";
         return;
     }
     if (!chain->HasChildren())
     {
-        Console(std::cout) << "Chain '" << chain->Id() << "' posted with no children\n";
+        Console(std::cout) << "Chain '" << chain->Id()
+            << "' posted with no children\n";
     }
 
     std::unique_lock<std::mutex> lock(m_mutex);
@@ -53,7 +55,8 @@ void Scheduler::Lib::StandardTaskScheduler::Enqueue(Task* task)
 
     if (!task->IsValid())
     {
-        Console(std::cout) << "Invalid task '" << task->ToString(true) << "' enqued to scheduler\n";
+        Console(std::cout) << "Invalid task '" << task->ToString(true)
+            << "' enqued to scheduler\n";
         return;
     }
 
@@ -92,7 +95,8 @@ Scheduler::Error Scheduler::Lib::StandardTaskScheduler::Initialize()
     return E_SUCCESS;
 }
 
-bool Scheduler::Lib::StandardTaskScheduler::IsTimedOut(const TaskPtr& task) const
+bool Scheduler::Lib::StandardTaskScheduler::IsTimedOut(
+    const TaskPtr& task) const
 {
     static Clock::duration TASK_TIMEOUT_INTERVAL = std::chrono::seconds(30);
 
@@ -129,13 +133,15 @@ bool Scheduler::Lib::StandardTaskScheduler::HandleExpiredTask(TaskPtr& task)
 
     if (task->IsActive())
     {
-        Console(std::cout) << "Task '" << task->Id() << "' expired while running\n";
+        Console(std::cout) << "Task '" << task->Id()
+            << "' expired while running\n";
         // Cancel the task in the executor
         task->SetState(TaskState::CANCELLED);
     }
     else
     {
-        Console(std::cout) << "Task '" << task->Id() << "' expired while in queue\n";
+        Console(std::cout) << "Task '" << task->Id()
+            << "' expired while in queue\n";
     }
 
     PrunePrematureTasks();
@@ -262,7 +268,8 @@ bool Scheduler::Lib::StandardTaskScheduler::ProcessPendingQueue()
         assert(m_active.count(uuid) == 0);
         assert(m_pending.count(uuid) == 0);
 
-        Console(std::cout) << "Unknown queued task: " << uuid << "(" << error << ")\n";
+        Console(std::cout) << "Unknown queued task: " << uuid
+            << "(" << error << ")\n";
         return true;
     }
 
@@ -272,7 +279,8 @@ bool Scheduler::Lib::StandardTaskScheduler::ProcessPendingQueue()
 
     if (task->IsExpired())
     {
-        Console(std::cout) << "Task '" << task->Id() << "' expired while in queue\n";
+        Console(std::cout) << "Task '" << task->Id()
+            << "' expired while in queue\n";
         m_manager->Expire(task->Id());
         return true;
     }
@@ -306,8 +314,8 @@ bool Scheduler::Lib::StandardTaskScheduler::ProcessPendingTasks()
         if ((error = m_manager->GetTask(uuid, task)) != E_SUCCESS)
         {
             assert(m_active.count(uuid) == 0);
-            Console(std::cout) << "Unknown pending task: " << uuid << "(" << error
-                << ")\n";
+            Console(std::cout) << "Unknown pending task: " << uuid
+                << "(" << error << ")\n";
             continue;
         }
 
