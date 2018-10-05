@@ -296,3 +296,35 @@ TEST(Scheduler, ProcessGroupAndDependentsWithFirstFailure)
     scheduler->Shutdown(true);
     ASSERT_TRUE(scheduler->IsShutdown());
 }
+
+
+TEST(Scheduler, BasicRetries)
+{
+    SchedulerParams params;
+    params.executorParams.concurrency = 2;
+    SchedulerPtr scheduler;
+    ASSERT_EQ(TaskScheduler::Create(params, scheduler), E_SUCCESS);
+    scheduler->Start();
+
+    TaskPtr taskA = Task::Create<Retry>(),
+            taskB = Task::Create<Success>();
+
+    Console(std::cout) << "taskA = " << taskA->ToString(true) << '\n';
+    Console(std::cout) << "taskB = " << taskB->ToString(true) << '\n';
+
+    taskB->Depends(taskA);
+    ASSERT_TRUE(taskA->IsValid());
+    ASSERT_TRUE(taskB->Requires(taskA));
+
+    scheduler->Enqueue(taskB);
+    scheduler->Enqueue(taskA);
+
+    taskA->Wait();
+    ASSERT_EQ(taskA->GetState(), TaskState::SUCCESS);
+
+    taskB->Wait();
+    ASSERT_EQ(taskB->GetState(), TaskState::SUCCESS);
+
+    scheduler->Shutdown(true);
+    ASSERT_TRUE(scheduler->IsShutdown());
+}

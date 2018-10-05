@@ -192,6 +192,18 @@ void Scheduler::Lib::StandardTaskScheduler::Notify(
             task->Fail();
             break;
         }
+        case TaskState::PENDING:
+        {
+            assert(task->IsRetryable());
+            assert(m_pending.count(task->Id()) == 0);
+            assert(m_active.count(task->Id()) > 0);
+            m_active.erase(task->Id());
+            m_pending.insert(task->Id());
+            Console(std::cout) << "Task '" << task->Id()
+                << "' moving back to PENDING state for retry\n";
+            task->SetState(TaskState::PENDING);
+            break;
+        }
         default:
             assert(!"Unhandled TaskState state");
     }

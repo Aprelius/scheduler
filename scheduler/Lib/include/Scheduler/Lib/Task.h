@@ -170,6 +170,8 @@ namespace Lib {
         /// on the given time range during construction.
         bool IsPremature() const;
 
+        virtual bool IsRetryable() const { return false; }
+
         /// Predicate check if the task is valid. This flag could get set
         /// during construction or anytime a dependency is added if that
         /// dependency would cause the task to never complete.
@@ -215,6 +217,13 @@ namespace Lib {
             return m_dependencies;
         }
 
+        virtual Clock::duration GetRetryInterval() const
+        {
+            return std::chrono::seconds(0);
+        }
+
+        void SetAfterTime(const Clock::time_point& point);
+
         void SetState(TaskState state);
         void SetStateLocked(
             TaskState state,
@@ -245,8 +254,13 @@ namespace Lib {
     public:
         ~RetryableTask<T>() { }
 
+        bool IsRetryable() const override { return true; }
+
     protected:
         using Task::Task;
+
+    private:
+        virtual Clock::duration GetRetryInterval() const = 0;
     };
 
     template<typename T>

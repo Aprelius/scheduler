@@ -147,6 +147,13 @@ bool Scheduler::Lib::Task::Requires(
     return false;
 }
 
+void Scheduler::Lib::Task::SetAfterTime(const Clock::time_point& point)
+{
+    assert(point > Clock::now());
+    std::lock_guard<std::mutex> lock(m_mutex);
+    m_after = point;
+}
+
 bool Scheduler::Lib::Task::IsPremature() const
 {
     if (m_after != Clock::time_point::max())

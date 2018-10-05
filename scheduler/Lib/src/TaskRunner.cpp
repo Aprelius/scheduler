@@ -62,8 +62,21 @@ void Scheduler::Lib::TaskRunner::Run()
             TaskState::FAILED);
         else m_task->SetState(TaskState::FAILED);
     }
-    Console() << "Run complete: "<<m_task->Id() << '\n';
-    assert(result != TaskResult::RESULT_RETRY);
+    else if (result == TaskResult::RESULT_RETRY)
+    {
+        Console(std::cout) << "Task '" << m_task->Id()
+            << "' retrying to execute after running for: "
+            << length << "ms. Next attempt in: "
+            << std::chrono::duration_cast<std::chrono::milliseconds>(
+                m_task->GetRetryInterval()).count()
+            << "ms\n";
+        m_task->SetAfterTime(Clock::now() + m_task->GetRetryInterval());
+        if (scheduler) scheduler->Notify(
+            m_task,
+            TaskState::PENDING);
+        else m_task->SetState(TaskState::PENDING);
+    }
+    else { assert(!"Unknown TaskResult value"); }
 }
 
 void Scheduler::Lib::TaskRunner::Release()
