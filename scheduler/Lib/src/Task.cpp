@@ -85,6 +85,9 @@ void Scheduler::Lib::Task::Fail()
     if (IsComplete()) return;
 
     SetStateLocked(TaskState::FAILED, lock);
+
+    lock.unlock();
+    m_cond.notify_all();
     // We should probably have some way of notifying every task
     // which depends on this one that it has failed.
 }
@@ -166,6 +169,9 @@ void Scheduler::Lib::Task::SetState(TaskState state)
 {
     std::unique_lock<std::mutex> lock(m_mutex);
     SetStateLocked(state, lock);
+
+    lock.unlock();
+    m_cond.notify_all();
 }
 
 void Scheduler::Lib::Task::SetStateLocked(
@@ -174,12 +180,8 @@ void Scheduler::Lib::Task::SetStateLocked(
 {
     if (!lock.owns_lock()) lock.lock();
     if (IsComplete()) return;
-    {
-        std::lock_guard<std::mutex> wait(m_waitex);
-        m_state = state;
-    }
-    m_wait.notify_all();
-    m_cond.notify_all();
+
+    m_state = state;
 }
 
 void Scheduler::Lib::Task::SetValid(bool status)
@@ -203,11 +205,13 @@ std::string Scheduler::Lib::Task::ToString(bool asShort) const
 
 void Scheduler::Lib::Task::Wait() const
 {
-    std::unique_lock<std::mutex> lock(m_waitex);
+    std::unique_lock<std::mutex> lock(m_mutex);
     if (IsComplete()) return;
 
-    m_wait.wait(lock, [&]{ return IsComplete(); });
-    m_wait.notify_all();
+    m_cond.wait(lock, [&]{ return IsComplete(); });
+
+    lock.unlock();
+    m_cond.notify_all();
 }
 
 std::ostream& Scheduler::Lib::operator<<(std::ostream& o, const Task* task)
