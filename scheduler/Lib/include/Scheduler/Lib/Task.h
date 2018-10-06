@@ -196,7 +196,7 @@ namespace Lib {
 
         /// Wait for a tast to complete. The wait will trigger for any state that
         /// sets it to Complete.
-        void Wait() const;
+        void Wait(bool complete = true) const;
 
     protected:
         Task();

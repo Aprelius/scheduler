@@ -203,12 +203,16 @@ std::string Scheduler::Lib::Task::ToString(bool asShort) const
     return o.str();
 }
 
-void Scheduler::Lib::Task::Wait() const
+void Scheduler::Lib::Task::Wait(bool complete) const
 {
     std::unique_lock<std::mutex> lock(m_mutex);
     if (IsComplete()) return;
 
-    m_cond.wait(lock, [&]{ return IsComplete(); });
+    TaskState state = m_state;
+    m_cond.wait(lock, [&]{
+        if (complete) return IsComplete();
+        return (state != m_state);
+    });
 
     lock.unlock();
     m_cond.notify_all();

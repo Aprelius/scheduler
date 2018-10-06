@@ -319,6 +319,10 @@ TEST(Scheduler, BasicRetries)
     scheduler->Enqueue(taskB);
     scheduler->Enqueue(taskA);
 
+    taskA->Wait(false);
+    ASSERT_TRUE(taskA->GetState() == TaskState::PENDING
+            || taskA->GetState() == TaskState::ACTIVE);
+
     taskA->Wait();
     ASSERT_EQ(taskA->GetState(), TaskState::SUCCESS);
 
