@@ -33,7 +33,7 @@ FILE(GLOB_RECURSE INTERNAL_H ${PROJECT_INTERNAL_DIR} "internal/*.h")
 FILE(GLOB_RECURSE SOURCES ${PROJECT_SOURCE_DIR} "src/*.cpp")
 
 target_link_libraries(Scheduler-Lib
-    PUBLIC Scheduler::Common)
+    PUBLIC Scheduler::Common TemplateUtils)
 
 target_sources(Scheduler-Lib
     PRIVATE ${HEADERS} ${INTERNAL_H} ${SOURCES})

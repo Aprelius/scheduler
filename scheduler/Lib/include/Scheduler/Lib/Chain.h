@@ -1,7 +1,7 @@
 #pragma once
 
-#include <Scheduler/Common/PackUtils.h>
-#include <Scheduler/Common/TypeTraits.h>
+#include <Utilities/PackUtils.h>
+#include <Utilities/TypeTraits.h>
 #include <Scheduler/Lib/Task.h>
 #include <algorithm>
 #include <iosfwd>
@@ -86,26 +86,26 @@ namespace Lib {
 
         template<typename... Args,
             typename = typename std::enable_if<
-                are_all_convertible<TaskPtr, Args...>::value>::type>
+                Utilities::AreAllConvertible<TaskPtr, Args...>::value>::type>
         Chain(
             const Clock::time_point& after,
             const Clock::time_point& before,
             Args&& ...args)
             : Task(after, before)
         {
-            m_children.reserve(PackUtils<Args...>::size);
-            PackUtils<Args...>::ForEach([&](auto& task){
+            m_children.reserve(Utilities::PackUtils<Args...>::size);
+            Utilities::PackUtils<Args...>::ForEach([&](auto& task){
                 this->Add(task);
             }, std::forward<Args>(args)...);
         }
 
         template<typename... Args,
             typename = typename std::enable_if<
-                are_all_convertible<TaskPtr, Args...>::value>::type>
+                Utilities::AreAllConvertible<TaskPtr, Args...>::value>::type>
         Chain(Args&& ...args)
         {
-            m_children.reserve(PackUtils<Args...>::size);
-            PackUtils<Args...>::ForEach([&](auto& task){
+            m_children.reserve(Utilities::PackUtils<Args...>::size);
+            Utilities::PackUtils<Args...>::ForEach([&](auto& task){
                 this->Add(task);
             }, std::forward<Args>(args)...);
         }

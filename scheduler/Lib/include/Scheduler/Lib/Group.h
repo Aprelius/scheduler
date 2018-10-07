@@ -42,26 +42,26 @@ namespace Lib {
 
         template<typename... Args,
             typename = typename std::enable_if<
-                are_all_convertible<TaskPtr, Args...>::value>::type>
+                Utilities::AreAllConvertible<TaskPtr, Args...>::value>::type>
         Group(
             const Clock::time_point& after,
             const Clock::time_point& before,
             Args&& ...args)
             : Chain(after, before)
         {
-            GetChildren().reserve(PackUtils<Args...>::size);
-            PackUtils<Args...>::ForEach([&](auto& task){
+            GetChildren().reserve(Utilities::PackUtils<Args...>::size);
+            Utilities::PackUtils<Args...>::ForEach([&](auto& task){
                 this->Add(task);
             }, std::forward<Args>(args)...);
         }
 
         template<typename... Args,
             typename = typename std::enable_if<
-                are_all_convertible<TaskPtr, Args...>::value>::type>
+                Utilities::AreAllConvertible<TaskPtr, Args...>::value>::type>
         Group(Args&& ...args) : Chain()
         {
-            GetChildren().reserve(PackUtils<Args...>::size);
-            PackUtils<Args...>::ForEach([&](auto& task){
+            GetChildren().reserve(Utilities::PackUtils<Args...>::size);
+            Utilities::PackUtils<Args...>::ForEach([&](auto& task){
                 this->Add(task);
             }, std::forward<Args>(args)...);
         }
