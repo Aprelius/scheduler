@@ -10,6 +10,7 @@ const char* Scheduler::ErrorToStr(Error e)
     if (e == E_NOT_FOUND) return "E_NOT_FOUND";
     if (e == E_CANCELLED) return "E_CANCELLED";
     if (e == E_COMPLETED) return "E_COMPLETED";
+    if (e == E_INVALID_ARGUMENT) return "E_INVALID_ARGUMENT";
     assert(!"Unknown error");
     return "<Unknown>";
 }
