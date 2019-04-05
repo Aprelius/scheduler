@@ -65,10 +65,14 @@ namespace Lib {
         /// It is expected that the time point given be in the future and
         /// creating one in the past will generate a bad task.
         template<typename T, typename... Args>
-        static std::shared_ptr<typename std::enable_if<std::is_base_of<Task, T>::value, T>::type>
-        After(const Clock::time_point& point, Args&& ...args)
+        static TaskTypePtr<T> After(const Clock::time_point& point, Args&& ...args)
         {
-            return std::shared_ptr<T>(new T(Clock::time_point::max(), point, std::forward<Args>(args)...));
+            return std::shared_ptr<T>(new T(
+                Clock::time_point::max(),
+                point,
+                std::forward<Args>(args)...));
+        }
+
         /// Create a task that executes the given callable object after a
         /// specified time. It is expected that the time point given be in
         /// the future and creating one in the past will generate an invalid
@@ -92,8 +96,14 @@ namespace Lib {
         /// It is expected that the time point given be in the future and
         /// creating one in the past will generate a bad task.
         template<typename T, typename... Args>
-        static std::shared_ptr<typename std::enable_if<std::is_base_of<Task, T>::value, T>::type>
-        Before(const Clock::time_point& point, Args&& ...args)
+        static TaskTypePtr<T> Before(const Clock::time_point& point, Args&& ...args)
+        {
+            return std::shared_ptr<T>(new T(
+                point,
+                Clock::time_point::max(),
+                std::forward<Args>(args)...));
+        }
+
         /// Create a Task with should execute a given callable object before
         /// the specified time. It is expected that the time point given be
         // in the future and creating one in the past will generate an invalid
@@ -115,10 +125,9 @@ namespace Lib {
 
         /// Create a task that should execute between two given time
         /// points. Both values should follow the rules for the
-        /// individual constructors in be in the future or now.
+        /// individual constructors and be in the future or now.
         template<typename T, typename... Args>
-        static std::shared_ptr<typename std::enable_if<std::is_base_of<Task, T>::value, T>::type>
-        Between(
+        static TaskTypePtr<T> Between(
             const Clock::time_point& after,
             const Clock::time_point& before,
             Args&& ...args)
@@ -148,8 +157,7 @@ namespace Lib {
 
         /// Create a simple task that has no time boundaries for execution.
         template<typename T, typename... Args>
-        static std::shared_ptr<typename std::enable_if<std::is_base_of<Task, T>::value, T>::type>
-        Create(Args&& ...args)
+        static TaskTypePtr<T> Create(Args&& ...args)
         {
             return std::shared_ptr<T>(new T(std::forward<Args>(args)...));
         }
