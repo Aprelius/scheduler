@@ -332,3 +332,47 @@ TEST(Scheduler, BasicRetries)
     scheduler->Shutdown(true);
     ASSERT_TRUE(scheduler->IsShutdown());
 }
+
+TEST(Scheduler, TasksWithLambdas)
+{
+    SchedulerParams params;
+    params.executorParams.concurrency = 2;
+    SchedulerPtr scheduler;
+    ASSERT_EQ(TaskScheduler::Create(params, scheduler), E_SUCCESS);
+    scheduler->Start();
+
+    int value = 0;
+    TaskPtr taskA = Task::Create([&]() {
+        value = 2;
+    });
+
+    ASSERT_TRUE(taskA->IsValid());
+
+    TaskPtr taskB = Task::Create([&]() -> TaskResult {
+        value *= 2;
+        return TaskResult::RESULT_SUCCESS;
+    });
+
+    ASSERT_TRUE(taskB->IsValid());
+    taskB->Requires(taskA);
+    ASSERT_TRUE(taskB->Depends(taskA));
+
+    TaskPtr taskC = Task::Create([&]() -> bool {
+        value /= 4;
+        return true;
+    });
+
+    ASSERT_TRUE(taskC->IsValid());
+    taskC->Requires(taskB);
+    ASSERT_TRUE(taskC->Depends(taskB));
+
+    scheduler->Enqueue(taskA);
+    scheduler->Enqueue(taskB);
+    scheduler->Enqueue(taskC);
+
+    taskC->Wait();
+    ASSERT_EQ(value, 1);
+
+    scheduler->Shutdown(true);
+    ASSERT_TRUE(scheduler->IsShutdown());
+}

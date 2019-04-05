@@ -55,6 +55,12 @@ namespace Lib {
         Task& operator=(const Task&) = delete;
 
     public:
+        template<typename T>
+        using TaskType = typename std::enable_if<std::is_base_of<Task, T>::value, T>::type;
+
+        template<typename T>
+        using TaskTypePtr = std::shared_ptr<TaskType<T>>;
+
         /// Create a task that should not execute after a given time.
         /// It is expected that the time point given be in the future and
         /// creating one in the past will generate a bad task.
@@ -63,6 +69,23 @@ namespace Lib {
         After(const Clock::time_point& point, Args&& ...args)
         {
             return std::shared_ptr<T>(new T(Clock::time_point::max(), point, std::forward<Args>(args)...));
+        /// Create a task that executes the given callable object after a
+        /// specified time. It is expected that the time point given be in
+        /// the future and creating one in the past will generate an invalid
+        /// task.
+        template<typename Callable, typename... Args,
+            typename = decltype(std::declval<Callable&>())>
+        static TaskTypePtr<Task> After(
+            Callable&& cb,
+            const Clock::time_point& point,
+            Args&& ...args)
+        {
+            return std::shared_ptr<Task::Impl<Task, Callable>>(
+                new Task::Impl<Task, Callable>(
+                    std::move(cb),
+                    Clock::time_point::max(),
+                    point,
+                    std::forward<Args>(args)...));
         }
 
         /// Create a Task that should not execute before a given time.
@@ -71,8 +94,23 @@ namespace Lib {
         template<typename T, typename... Args>
         static std::shared_ptr<typename std::enable_if<std::is_base_of<Task, T>::value, T>::type>
         Before(const Clock::time_point& point, Args&& ...args)
+        /// Create a Task with should execute a given callable object before
+        /// the specified time. It is expected that the time point given be
+        // in the future and creating one in the past will generate an invalid
+        /// task.
+        template<typename Callable, typename... Args,
+            typename = decltype(std::declval<Callable&>())>
+        static TaskTypePtr<Task> Before(
+            Callable&& cb,
+            const Clock::time_point& point,
+            Args&& ...args)
         {
-            return std::shared_ptr<T>(new T(point, Clock::time_point::max(), std::forward<Args>(args)...));
+            return std::shared_ptr<Task::Impl<Task, Callable>>(
+                new Task::Impl<Task, Callable>(
+                    std::move(cb),
+                    point,
+                    Clock::time_point::max(),
+                    std::forward<Args>(args)...));
         }
 
         /// Create a task that should execute between two given time
@@ -88,12 +126,47 @@ namespace Lib {
             return std::shared_ptr<T>(new T(before, after, std::forward<Args>(args)...));
         }
 
+        /// Create a Task that should execute a given callable object
+        /// between the two specified time points. Both values should
+        /// follow the rules for the individual constructors and be
+        /// in the future or now.
+        template<typename Callable, typename... Args,
+            typename = decltype(std::declval<Callable&>())>
+        static TaskTypePtr<Task> Between(
+            Callable&& cb,
+            const Clock::time_point& after,
+            const Clock::time_point& before,
+            Args&& ...args)
+        {
+            return std::shared_ptr<Task::Impl<Task, Callable>>(
+                new Task::Impl<Task, Callable>(
+                    std::move(cb),
+                    before,
+                    after,
+                    std::forward<Args>(args)...));
+        }
+
         /// Create a simple task that has no time boundaries for execution.
         template<typename T, typename... Args>
         static std::shared_ptr<typename std::enable_if<std::is_base_of<Task, T>::value, T>::type>
         Create(Args&& ...args)
         {
             return std::shared_ptr<T>(new T(std::forward<Args>(args)...));
+        }
+
+        /// Create a simple Task with a callable object as the body. This
+        /// allows for any type of callback to be scheduled as a Task. There
+        /// are no time boundaries associated with this task by default
+        /// however the parameters maye be appended and passed to the Task
+        /// constructor.
+        template<typename Callable, typename ...Args,
+            typename = decltype(std::declval<Callable&>())>
+        static TaskTypePtr<Task> Create(Callable&& cb, Args&& ...args)
+        {
+            return std::shared_ptr<Task::Impl<Task, Callable>>(
+                new Task::Impl<Task, Callable>(
+                    std::move(cb),
+                    std::forward<Args>(args)...));
         }
 
         /// The destructor.
@@ -206,7 +279,7 @@ namespace Lib {
 
         virtual void Fail();
 
-        virtual TaskResult Run() = 0;
+        virtual TaskResult Run() { return TaskResult::RESULT_FAILURE; };
 
         void SetValid(bool status);
 
@@ -229,6 +302,42 @@ namespace Lib {
         void SetStateLocked(
             TaskState state,
             std::unique_lock<std::mutex>& lock);
+
+        template<typename Base, typename Callable,
+            typename CallableType = decltype(std::declval<Callable&>()),
+            typename ResultType = typename std::result_of<CallableType()>::type>
+        class Impl : public Base
+        {
+            static_assert(std::is_move_constructible<Callable>::value,
+                "Callable must be move-constructible");
+            static_assert(std::is_same<ResultType, TaskResult>::value
+                || std::is_same<ResultType, void>::value
+                || std::is_same<ResultType, bool>::value,
+                "Callable return type must be a TaskResult value or void-type");
+        public:
+            template<typename ...Args>
+            Impl(Callable&& cb, Args&& ...args)
+                : Task(std::forward<Args>(args)...),
+                  m_callback(std::move(cb)) { }
+            ~Impl() { }
+
+            TaskResult Run() final override { return _Run(static_cast<ResultType*>(nullptr)); }
+
+        private:
+
+            TaskResult _Run(bool*)
+            {
+                if (m_callback()) return TaskResult::RESULT_SUCCESS;
+                return TaskResult::RESULT_FAILURE;
+            }
+
+            TaskResult _Run(void*) { m_callback(); return TaskResult::RESULT_SUCCESS; }
+
+            TaskResult _Run(TaskResult*) { return m_callback(); }
+
+            Callable m_callback;
+            bool m_called = false;
+        };
 
         UUID m_id;
         TaskState m_state;
