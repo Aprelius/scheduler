@@ -16,7 +16,7 @@ add_executable(SchedulerTests)
 target_include_directories(SchedulerTests
     PUBLIC ${PROJECT_INCLUDE_DIR}
     PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/../scheduler/Lib/internal)
+        ${CMAKE_CURRENT_SOURCE_DIR}/../scheduler/internal)
 
 # Create the directory for the Header Files
 FILE(GLOB_RECURSE HEADERS ${PROJECT_INCLUDE_DIR} "include/*.h")
@@ -29,4 +29,4 @@ target_link_libraries(SchedulerTests
     PRIVATE
         gtest gmock
     PUBLIC
-        Scheduler::Lib Scheduler::Common)
+        Scheduler::Lib)
