@@ -24,9 +24,9 @@ std::ostream& Scheduler::Lib::operator<<(std::ostream& o, TaskState state)
 
 const char* Scheduler::Lib::TaskResultToStr(TaskResult result)
 {
-    if (result == TaskResult::RESULT_SUCCESS) return "RESULT_SUCCESS";
-    if (result == TaskResult::RESULT_FAILURE) return "RESULT_FAILURE";
-    if (result == TaskResult::RESULT_RETRY) return "RESULT_RETRY";
+    if (result == TaskResult::SUCCESS) return "TaskResult::SUCCESS";
+    if (result == TaskResult::FAILURE) return "TaskResult::FAILURE";
+    if (result == TaskResult::RETRY) return "RESULT_RETRY";
     assert(!"Unknown TaskResult value");
     return "<Unknown TaskResult>";
 }

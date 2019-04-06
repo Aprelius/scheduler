@@ -350,7 +350,7 @@ TEST(Scheduler, TasksWithLambdas)
 
     TaskPtr taskB = Task::Create([&]() -> TaskResult {
         value *= 2;
-        return TaskResult::RESULT_SUCCESS;
+        return TaskResult::SUCCESS;
     });
 
     ASSERT_TRUE(taskB->IsValid());

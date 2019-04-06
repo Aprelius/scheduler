@@ -19,7 +19,7 @@ namespace Tests {
             return std::chrono::seconds(0);
         }
 
-        Lib::TaskResult Run() { return Lib::RESULT_FAILURE; }
+        Lib::TaskResult Run() { return Lib::TaskResult::FAILURE; }
     };
 
     class Retry : public Lib::ImmutableTask<Retry>
@@ -41,9 +41,9 @@ namespace Tests {
             if (!m_retried)
             {
                 m_retried = true;
-                return Lib::RESULT_RETRY;
+                return Lib::TaskResult::RETRY;
             }
-            return Lib::RESULT_SUCCESS;
+            return Lib::TaskResult::SUCCESS;
         }
 
         bool m_retried = false;
@@ -63,7 +63,7 @@ namespace Tests {
             return std::chrono::seconds(0);
         }
 
-        Lib::TaskResult Run() { return Lib::RESULT_SUCCESS; }
+        Lib::TaskResult Run() { return Lib::TaskResult::SUCCESS; }
     };
 
 }  // namespace Tests

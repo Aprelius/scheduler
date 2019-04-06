@@ -135,7 +135,7 @@ TEST(TaskConstruction, TasksWithLambdas)
     value = 0;
     TaskPtr taskB = Task::Create([&]() -> TaskResult {
         value = 1;
-        return TaskResult::RESULT_SUCCESS;
+        return TaskResult::SUCCESS;
     });
 
     ASSERT_TRUE(taskB->IsValid());

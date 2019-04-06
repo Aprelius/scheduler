@@ -17,7 +17,7 @@ namespace Lib {
     class TaskRunner;
     class StandardTaskScheduler;
 
-    enum TaskState
+    enum class TaskState : uint8_t
     {
         NEW = 0,
         SUCCESS = 1,
@@ -32,11 +32,11 @@ namespace Lib {
 
     std::ostream& operator<<(std::ostream& o, TaskState state);
 
-    enum TaskResult
+    enum class TaskResult : uint8_t
     {
-        RESULT_SUCCESS,
-        RESULT_FAILURE,
-        RESULT_RETRY
+        SUCCESS = 0,
+        FAILURE = 1,
+        RETRY = 2
     };
 
     const char* TaskResultToStr(TaskResult result);
@@ -287,7 +287,7 @@ namespace Lib {
 
         virtual void Fail();
 
-        virtual TaskResult Run() { return TaskResult::RESULT_FAILURE; };
+        virtual TaskResult Run() { return TaskResult::FAILURE; };
 
         void SetValid(bool status);
 
@@ -335,11 +335,11 @@ namespace Lib {
 
             TaskResult _Run(bool*)
             {
-                if (m_callback()) return TaskResult::RESULT_SUCCESS;
-                return TaskResult::RESULT_FAILURE;
+                if (m_callback()) return TaskResult::SUCCESS;
+                return TaskResult::FAILURE;
             }
 
-            TaskResult _Run(void*) { m_callback(); return TaskResult::RESULT_SUCCESS; }
+            TaskResult _Run(void*) { m_callback(); return TaskResult::SUCCESS; }
 
             TaskResult _Run(TaskResult*) { return m_callback(); }
 

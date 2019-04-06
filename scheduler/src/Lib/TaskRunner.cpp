@@ -44,7 +44,7 @@ void Scheduler::Lib::TaskRunner::Run()
     int64_t length = std::chrono::duration_cast<
         std::chrono::milliseconds>(stop - start).count();
 
-    if (result == TaskResult::RESULT_SUCCESS)
+    if (result == TaskResult::SUCCESS)
     {
         Console(std::cout) << "Task '" << m_task->Id()
             << "' successfully executed in: " << length << "ms\n";
@@ -53,7 +53,7 @@ void Scheduler::Lib::TaskRunner::Run()
             TaskState::SUCCESS);
         else m_task->SetState(TaskState::SUCCESS);
     }
-    else if (result == TaskResult::RESULT_FAILURE)
+    else if (result == TaskResult::FAILURE)
     {
         Console(std::cout) << "Task '" << m_task->Id()
             << "' failed to execute after: " << length << "ms\n";
@@ -62,7 +62,7 @@ void Scheduler::Lib::TaskRunner::Run()
             TaskState::FAILED);
         else m_task->SetState(TaskState::FAILED);
     }
-    else if (result == TaskResult::RESULT_RETRY)
+    else if (result == TaskResult::RETRY)
     {
         Console(std::cout) << "Task '" << m_task->Id()
             << "' retrying to execute after running for: "
