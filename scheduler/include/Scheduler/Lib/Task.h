@@ -339,6 +339,8 @@ namespace Lib {
         template<typename Fn, typename ...Args>
         using FnResultType = typename std::result_of<Fn(Args...)>::type;
 
+        enum class CbVariant : uint8_t { EMPTY, RES_ONLY, TASK_ONLY, TASK_RES };
+
         template<typename Fn, typename = void>
         struct ValidCallback : std::false_type { };
 
@@ -347,6 +349,27 @@ namespace Lib {
         {
             typedef FnResultType<Fn, ResultPtr&> ResultType;
             static constexpr std::true_type results{};
+            static constexpr CbVariant variant = CbVariant::RES_ONLY;
+        };
+
+        template<typename Fn>
+        struct ValidCallback<Fn, typename std::enable_if<TaskCb<Fn, FnResultType<Fn, Task*>>::value>::type> : std::true_type
+        {
+            typedef FnResultType<Fn, Task*> ResultType;
+            static constexpr std::true_type results{};
+            static constexpr CbVariant variant = CbVariant::TASK_ONLY;
+        };
+
+        template<typename Fn>
+        struct ValidCallback<
+            Fn,
+            typename std::enable_if<
+                TaskCb<Fn, FnResultType<Fn, Task*, ResultPtr&>>::value
+            >::type> : std::true_type
+        {
+            typedef FnResultType<Fn, Task*, ResultPtr&> ResultType;
+            static constexpr std::true_type results{};
+            static constexpr CbVariant variant = CbVariant::TASK_RES;
         };
 
         template<typename Fn>
@@ -354,9 +377,10 @@ namespace Lib {
         {
             typedef FnResultType<Fn> ResultType;
             static constexpr std::false_type results{};
+            static constexpr CbVariant variant = CbVariant::EMPTY;
         };
 
-        template<typename ResultType, typename T>
+        template<typename ResultType, typename T, typename Enum, Enum variant>
         struct Runner;
 
         template<typename Base, typename Callable>
@@ -367,7 +391,7 @@ namespace Lib {
             static_assert(std::is_move_constructible<Callable>::value,
                 "Callable must be move-constructible");
             static_assert(TaskCb<Callable, ResultType>::value,
-                "Callable return type must be a TaskResult value or void-type");
+                "Callable return type must be a TaskResult, boolean, or void-type");
             static_assert(ValidCallback<Callable>::value,
                 "Invalid callable object");
         public:
@@ -379,8 +403,15 @@ namespace Lib {
 
             TaskResult Run(ResultPtr& result) override
             {
-                return Runner<ResultType, decltype(ValidCallback<Callable>::results)>::Run(
-                    static_cast<ResultType*>(nullptr), m_callback, result);
+                return Runner<
+                    ResultType,
+                    decltype(ValidCallback<Callable>::results),
+                    CbVariant,
+                    ValidCallback<Callable>::variant>::Run(
+                        static_cast<ResultType*>(nullptr),
+                        this,
+                        m_callback,
+                        result);
             }
 
         private:
@@ -402,10 +433,10 @@ namespace Lib {
     };
 
     template<>
-    struct Task::Runner<void, const std::false_type>
+    struct Task::Runner<void, const std::false_type, Task::CbVariant, Task::CbVariant::EMPTY>
     {
         template<typename Fn>
-        static TaskResult Run(void*, Fn& fn, ResultPtr&)
+        static TaskResult Run(void*, Task*, Fn& fn, ResultPtr&)
         {
             fn();
             return TaskResult::SUCCESS;
@@ -413,10 +444,10 @@ namespace Lib {
     };
 
     template<>
-    struct Task::Runner<bool, const std::false_type>
+    struct Task::Runner<bool, const std::false_type, Task::CbVariant, Task::CbVariant::EMPTY>
     {
         template<typename Fn>
-        static TaskResult Run(bool*, Fn& fn, ResultPtr&)
+        static TaskResult Run(bool*, Task*, Fn& fn, ResultPtr&)
         {
             if (fn()) return TaskResult::SUCCESS;
             return TaskResult::FAILURE;
@@ -424,17 +455,46 @@ namespace Lib {
     };
 
     template<>
-    struct Task::Runner<TaskResult, const std::false_type>
+    struct Task::Runner<TaskResult, const std::false_type, Task::CbVariant, Task::CbVariant::EMPTY>
     {
         template<typename Fn>
-        static TaskResult Run(TaskResult*, Fn& fn, ResultPtr&) { return fn(); }
+        static TaskResult Run(TaskResult*, Task*, Fn& fn, ResultPtr&) { return fn(); }
     };
 
     template<>
-    struct Task::Runner<void, const std::true_type>
+    struct Task::Runner<void, const std::true_type, Task::CbVariant, Task::CbVariant::TASK_ONLY>
     {
         template<typename Fn>
-        static TaskResult Run(void*, Fn& fn, ResultPtr& result)
+        static TaskResult Run(void*, Task* task, Fn& fn, ResultPtr&)
+        {
+            fn(task);
+            return TaskResult::SUCCESS;
+        }
+    };
+
+    template<>
+    struct Task::Runner<bool, const std::true_type, Task::CbVariant, Task::CbVariant::TASK_ONLY>
+    {
+        template<typename Fn>
+        static TaskResult Run(bool*, Task* task, Fn& fn, ResultPtr&)
+        {
+            if (fn(task)) return TaskResult::SUCCESS;
+            return TaskResult::FAILURE;
+        }
+    };
+
+    template<>
+    struct Task::Runner<TaskResult, const std::true_type, Task::CbVariant, Task::CbVariant::TASK_ONLY>
+    {
+        template<typename Fn>
+        static TaskResult Run(TaskResult*, Task* task, Fn& fn, ResultPtr&) { return fn(task); }
+    };
+
+    template<>
+    struct Task::Runner<void, const std::true_type, Task::CbVariant, Task::CbVariant::RES_ONLY>
+    {
+        template<typename Fn>
+        static TaskResult Run(void*, Task*, Fn& fn, ResultPtr& result)
         {
             fn(result);
             return TaskResult::SUCCESS;
@@ -442,10 +502,10 @@ namespace Lib {
     };
 
     template<>
-    struct Task::Runner<bool, const std::true_type>
+    struct Task::Runner<bool, const std::true_type, Task::CbVariant, Task::CbVariant::RES_ONLY>
     {
         template<typename Fn>
-        static TaskResult Run(bool*, Fn& fn, ResultPtr& result)
+        static TaskResult Run(bool*, Task*, Fn& fn, ResultPtr& result)
         {
             if (fn(result)) return TaskResult::SUCCESS;
             return TaskResult::FAILURE;
@@ -453,10 +513,42 @@ namespace Lib {
     };
 
     template<>
-    struct Task::Runner<TaskResult, const std::true_type>
+    struct Task::Runner<TaskResult, const std::true_type, Task::CbVariant, Task::CbVariant::RES_ONLY>
     {
         template<typename Fn>
-        static TaskResult Run(TaskResult*, Fn& fn, ResultPtr& result) { return fn(result); }
+        static TaskResult Run(TaskResult*, Task*, Fn& fn, ResultPtr& result) { return fn(result); }
+    };
+
+    template<>
+    struct Task::Runner<void, const std::true_type, Task::CbVariant, Task::CbVariant::TASK_RES>
+    {
+        template<typename Fn>
+        static TaskResult Run(void*, Task* task, Fn& fn, ResultPtr& result)
+        {
+            fn(task, result);
+            return TaskResult::SUCCESS;
+        }
+    };
+
+    template<>
+    struct Task::Runner<bool, const std::true_type, Task::CbVariant, Task::CbVariant::TASK_RES>
+    {
+        template<typename Fn>
+        static TaskResult Run(bool*, Task* task, Fn& fn, ResultPtr& result)
+        {
+            if (fn(task, result)) return TaskResult::SUCCESS;
+            return TaskResult::FAILURE;
+        }
+    };
+
+    template<>
+    struct Task::Runner<TaskResult, const std::true_type, Task::CbVariant, Task::CbVariant::TASK_RES>
+    {
+        template<typename Fn>
+        static TaskResult Run(TaskResult*, Task* task , Fn& fn, ResultPtr& result)
+        {
+            return fn(task, result);
+        }
     };
 
     std::ostream& operator<<(std::ostream& o, const Task* task);

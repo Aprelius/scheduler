@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 
+#include <Scheduler/Common/Console.h>
 #include <Scheduler/Lib/Task.h>
 #include <Scheduler/Tests/ClockUtils.h>
 #include <Scheduler/Tests/Tasks.h>
@@ -219,6 +220,64 @@ TEST(TaskConstruction, TasksWithLambdas_WithoutResult)
     value = 0;
     TaskPtr taskC = Task::Create([&]() -> bool {
         value = 1;
+        return true;
+    });
+
+    ASSERT_TRUE(taskC->IsValid());
+}
+
+TEST(TaskConstruction, TasksWithLambdas_WithTask)
+{
+    bool value = 0;
+    TaskPtr taskA = Task::Create([&](Task* task) {
+        value = 1;
+        Console(std::cout) << "taskA = " << task;
+    });
+
+    ASSERT_TRUE(taskA->IsValid());
+
+    value = 0;
+    TaskPtr taskB = Task::Create([&](Task* task) -> TaskResult {
+        value = 1;
+        Console(std::cout) << "taskB = " << task;
+        return TaskResult::SUCCESS;
+    });
+
+    ASSERT_TRUE(taskB->IsValid());
+
+    value = 0;
+    TaskPtr taskC = Task::Create([&](Task* task) -> bool {
+        value = 1;
+        Console(std::cout) << "taskC = " << task;
+        return true;
+    });
+
+    ASSERT_TRUE(taskC->IsValid());
+}
+
+TEST(TaskConstruction, TasksWithLambdas_WithTaskResult)
+{
+    bool value = 0;
+    TaskPtr taskA = Task::Create([&](Task* task, ResultPtr&) {
+        value = 1;
+        Console(std::cout) << "taskA = " << task << '\n';
+    });
+
+    ASSERT_TRUE(taskA->IsValid());
+
+    value = 0;
+    TaskPtr taskB = Task::Create([&](Task* task, ResultPtr&) -> TaskResult {
+        value = 1;
+        Console(std::cout) << "taskB = " << task << '\n';
+        return TaskResult::SUCCESS;
+    });
+
+    ASSERT_TRUE(taskB->IsValid());
+
+    value = 0;
+    TaskPtr taskC = Task::Create([&](Task* task, ResultPtr&) -> bool {
+        value = 1;
+        Console(std::cout) << "taskC = " << task << '\n';
         return true;
     });
 

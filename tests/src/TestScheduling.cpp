@@ -376,3 +376,50 @@ TEST(Scheduler, TasksWithLambdas)
     scheduler->Shutdown(true);
     ASSERT_TRUE(scheduler->IsShutdown());
 }
+
+TEST(Scheduler, TasksWithLambdas_WithTaskResult)
+{
+    SchedulerParams params;
+    params.executorParams.concurrency = 2;
+    SchedulerPtr scheduler;
+    ASSERT_EQ(TaskScheduler::Create(params, scheduler), E_SUCCESS);
+    scheduler->Start();
+
+    int value = 0;
+    TaskPtr taskA = Task::Create([&](Task* task, ResultPtr&) {
+        value = 2;
+        Console(std::cout) << "taskA = " << task << " value = " << value << '\n';
+    });
+
+    ASSERT_TRUE(taskA->IsValid());
+
+    TaskPtr taskB = Task::Create([&](Task* task, ResultPtr&) -> TaskResult {
+        value *= 2;
+        Console(std::cout) << "taskB = " << task << " value = " << value << '\n';
+        return TaskResult::SUCCESS;
+    });
+
+    ASSERT_TRUE(taskB->IsValid());
+    taskB->Requires(taskA);
+    ASSERT_TRUE(taskB->Depends(taskA));
+
+    TaskPtr taskC = Task::Create([&](Task* task, ResultPtr&) -> bool {
+        value /= 4;
+        Console(std::cout) << "taskC = " << task << " value = " << value << '\n';
+        return true;
+    });
+
+    ASSERT_TRUE(taskC->IsValid());
+    taskC->Requires(taskB);
+    ASSERT_TRUE(taskC->Depends(taskB));
+
+    scheduler->Enqueue(taskA);
+    scheduler->Enqueue(taskB);
+    scheduler->Enqueue(taskC);
+
+    taskC->Wait();
+    ASSERT_EQ(value, 1);
+
+    scheduler->Shutdown(true);
+    ASSERT_TRUE(scheduler->IsShutdown());
+}
