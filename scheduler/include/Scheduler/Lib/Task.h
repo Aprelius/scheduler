@@ -346,18 +346,23 @@ namespace Lib {
         struct ValidCallback<Fn, typename std::enable_if<TaskCb<Fn, FnResultType<Fn, ResultPtr&>>::value>::type> : std::true_type
         {
             typedef FnResultType<Fn, ResultPtr&> ResultType;
+            static constexpr std::true_type results{};
         };
+
+        template<typename Fn>
+        struct ValidCallback<Fn, typename std::enable_if<TaskCb<Fn, FnResultType<Fn>>::value>::type> : std::true_type
+        {
+            typedef FnResultType<Fn> ResultType;
+            static constexpr std::false_type results{};
+        };
+
+        template<typename ResultType, typename T>
+        struct Runner;
 
         template<typename Base, typename Callable>
         class Impl : public Base
         {
             typedef typename ValidCallback<Callable>::ResultType ResultType;
-
-            static_assert(
-                std::is_same<typename TaskCb<Callable, ResultType>::type, void>::value
-                || std::is_same<typename TaskCb<Callable, ResultType>::type, bool>::value
-                || std::is_same<typename TaskCb<Callable, ResultType>::type, TaskResult>::value,
-                "TaskCb::type is not allowed");
 
             static_assert(std::is_move_constructible<Callable>::value,
                 "Callable must be move-constructible");
@@ -372,24 +377,13 @@ namespace Lib {
                   m_callback(std::move(cb)) { }
             ~Impl() { }
 
-            TaskResult Run(ResultPtr& result) override { return _Run(static_cast<ResultType*>(nullptr), result); }
+            TaskResult Run(ResultPtr& result) override
+            {
+                return Runner<ResultType, decltype(ValidCallback<Callable>::results)>::Run(
+                    static_cast<ResultType*>(nullptr), m_callback, result);
+            }
 
         private:
-
-            TaskResult _Run(bool*, ResultPtr& result)
-            {
-                if (m_callback(result)) return TaskResult::SUCCESS;
-                return TaskResult::FAILURE;
-            }
-
-            TaskResult _Run(void*, ResultPtr& result)
-            {
-                m_callback(result);
-                return TaskResult::SUCCESS;
-            }
-
-            TaskResult _Run(TaskResult*, ResultPtr& result) { return m_callback(result); }
-
             Callable m_callback;
             bool m_called = false;
         };
@@ -405,6 +399,64 @@ namespace Lib {
         std::vector<TaskPtr> m_dependencies;
         mutable std::condition_variable m_cond;
         mutable std::mutex m_mutex;
+    };
+
+    template<>
+    struct Task::Runner<void, const std::false_type>
+    {
+        template<typename Fn>
+        static TaskResult Run(void*, Fn& fn, ResultPtr&)
+        {
+            fn();
+            return TaskResult::SUCCESS;
+        }
+    };
+
+    template<>
+    struct Task::Runner<bool, const std::false_type>
+    {
+        template<typename Fn>
+        static TaskResult Run(bool*, Fn& fn, ResultPtr&)
+        {
+            if (fn()) return TaskResult::SUCCESS;
+            return TaskResult::FAILURE;
+        }
+    };
+
+    template<>
+    struct Task::Runner<TaskResult, const std::false_type>
+    {
+        template<typename Fn>
+        static TaskResult Run(TaskResult*, Fn& fn, ResultPtr&) { return fn(); }
+    };
+
+    template<>
+    struct Task::Runner<void, const std::true_type>
+    {
+        template<typename Fn>
+        static TaskResult Run(void*, Fn& fn, ResultPtr& result)
+        {
+            fn(result);
+            return TaskResult::SUCCESS;
+        }
+    };
+
+    template<>
+    struct Task::Runner<bool, const std::true_type>
+    {
+        template<typename Fn>
+        static TaskResult Run(bool*, Fn& fn, ResultPtr& result)
+        {
+            if (fn(result)) return TaskResult::SUCCESS;
+            return TaskResult::FAILURE;
+        }
+    };
+
+    template<>
+    struct Task::Runner<TaskResult, const std::true_type>
+    {
+        template<typename Fn>
+        static TaskResult Run(TaskResult*, Fn& fn, ResultPtr& result) { return fn(result); }
     };
 
     std::ostream& operator<<(std::ostream& o, const Task* task);

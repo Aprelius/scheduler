@@ -42,7 +42,7 @@ TEST(TaskConstruction, CreateSimpleAfterTask)
     ASSERT_FALSE(taskB->IsExpired());
 }
 
-TEST(TaskConstruction, CreateSimpleAfterTask_WithLambdas)
+TEST(TaskConstruction, CreateSimpleAfterTask_WithLambdas_WithResult)
 {
     bool capture = false;
     TaskPtr taskA = Task::After([&](ResultPtr&){ capture = true; }, Future(seconds(10)));
@@ -51,6 +51,20 @@ TEST(TaskConstruction, CreateSimpleAfterTask_WithLambdas)
     ASSERT_FALSE(taskA->IsExpired());
 
     TaskPtr taskB = Task::After([&](ResultPtr&){ capture = true; }, Past(seconds(10)));
+    ASSERT_EQ(taskB->GetState(), TaskState::NEW);
+    ASSERT_FALSE(taskB->IsPremature());
+    ASSERT_FALSE(taskB->IsExpired());
+}
+
+TEST(TaskConstruction, CreateSimpleAfterTask_WithLambdas_WithoutResult)
+{
+    bool capture = false;
+    TaskPtr taskA = Task::After([&](){ capture = true; }, Future(seconds(10)));
+    ASSERT_EQ(taskA->GetState(), TaskState::NEW);
+    ASSERT_TRUE(taskA->IsPremature());
+    ASSERT_FALSE(taskA->IsExpired());
+
+    TaskPtr taskB = Task::After([&](){ capture = true; }, Past(seconds(10)));
     ASSERT_EQ(taskB->GetState(), TaskState::NEW);
     ASSERT_FALSE(taskB->IsPremature());
     ASSERT_FALSE(taskB->IsExpired());
@@ -69,7 +83,7 @@ TEST(TaskConstruction, CreateSimpleBeforeTask)
     ASSERT_TRUE(taskB->IsExpired());
 }
 
-TEST(TaskConstruction, CreateSimpleBeforeTask_WithLambdas)
+TEST(TaskConstruction, CreateSimpleBeforeTask_WithLambdas_WithResult)
 {
     bool capture = false;
     TaskPtr taskA = Task::Before([&](ResultPtr&){ capture = true; }, Future(seconds(10)));
@@ -78,6 +92,20 @@ TEST(TaskConstruction, CreateSimpleBeforeTask_WithLambdas)
     ASSERT_FALSE(taskA->IsExpired());
 
     TaskPtr taskB = Task::Before([&](ResultPtr&){ capture = true; }, Past(seconds(10)));
+    ASSERT_EQ(taskB->GetState(), TaskState::NEW);
+    ASSERT_FALSE(taskB->IsPremature());
+    ASSERT_TRUE(taskB->IsExpired());
+}
+
+TEST(TaskConstruction, CreateSimpleBeforeTask_WithLambdas_WithoutResult)
+{
+    bool capture = false;
+    TaskPtr taskA = Task::Before([&](){ capture = true; }, Future(seconds(10)));
+    ASSERT_EQ(taskA->GetState(), TaskState::NEW);
+    ASSERT_FALSE(taskA->IsPremature());
+    ASSERT_FALSE(taskA->IsExpired());
+
+    TaskPtr taskB = Task::Before([&](){ capture = true; }, Past(seconds(10)));
     ASSERT_EQ(taskB->GetState(), TaskState::NEW);
     ASSERT_FALSE(taskB->IsPremature());
     ASSERT_TRUE(taskB->IsExpired());
@@ -101,7 +129,7 @@ TEST(TaskConstruction, CreateSimpleBetweenTask)
     ASSERT_TRUE(taskC->IsExpired());
 }
 
-TEST(TaskConstruction, CreateSimpleBetweenTask_WithLambdas)
+TEST(TaskConstruction, CreateSimpleBetweenTask_WithLambdas_WithResult)
 {
     bool capture = false;
     TaskPtr taskA = Task::Between([&](ResultPtr&){ capture = true; },
@@ -123,7 +151,29 @@ TEST(TaskConstruction, CreateSimpleBetweenTask_WithLambdas)
     ASSERT_TRUE(taskC->IsExpired());
 }
 
-TEST(TaskConstruction, TasksWithLambdasWithResult)
+TEST(TaskConstruction, CreateSimpleBetweenTask_WithLambdas_WithoutResult)
+{
+    bool capture = false;
+    TaskPtr taskA = Task::Between([&](){ capture = true; },
+        Clock::now(), Future(seconds(10)));
+    ASSERT_EQ(taskA->GetState(), TaskState::NEW);
+    ASSERT_FALSE(taskA->IsPremature());
+    ASSERT_FALSE(taskA->IsExpired());
+
+    TaskPtr taskB = Task::Between([&](){ capture = true; },
+        Future(seconds(10)), Future(seconds(15)));
+    ASSERT_EQ(taskB->GetState(), TaskState::NEW);
+    ASSERT_TRUE(taskB->IsPremature());
+    ASSERT_FALSE(taskB->IsExpired());
+
+    TaskPtr taskC = Task::Between([&](){ capture = true; },
+        Past(seconds(15)), Past(seconds(10)));
+    ASSERT_EQ(taskC->GetState(), TaskState::NEW);
+    ASSERT_FALSE(taskC->IsPremature());
+    ASSERT_TRUE(taskC->IsExpired());
+}
+
+TEST(TaskConstruction, TasksWithLambdas_WithResult)
 {
     bool value = 0;
     TaskPtr taskA = Task::Create([&](ResultPtr&) {
@@ -142,6 +192,32 @@ TEST(TaskConstruction, TasksWithLambdasWithResult)
 
     value = 0;
     TaskPtr taskC = Task::Create([&](ResultPtr&) -> bool {
+        value = 1;
+        return true;
+    });
+
+    ASSERT_TRUE(taskC->IsValid());
+}
+
+TEST(TaskConstruction, TasksWithLambdas_WithoutResult)
+{
+    bool value = 0;
+    TaskPtr taskA = Task::Create([&]() {
+        value = 1;
+    });
+
+    ASSERT_TRUE(taskA->IsValid());
+
+    value = 0;
+    TaskPtr taskB = Task::Create([&]() -> TaskResult {
+        value = 1;
+        return TaskResult::SUCCESS;
+    });
+
+    ASSERT_TRUE(taskB->IsValid());
+
+    value = 0;
+    TaskPtr taskC = Task::Create([&]() -> bool {
         value = 1;
         return true;
     });
