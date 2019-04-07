@@ -19,7 +19,7 @@ namespace Tests {
             return std::chrono::seconds(0);
         }
 
-        Lib::TaskResult Run() { return Lib::TaskResult::FAILURE; }
+        Lib::TaskResult Run(Lib::ResultPtr&) override { return Lib::TaskResult::FAILURE; }
     };
 
     class Retry : public Lib::ImmutableTask<Retry>
@@ -36,7 +36,7 @@ namespace Tests {
             return std::chrono::milliseconds(10);
         }
 
-        Lib::TaskResult Run()
+        Lib::TaskResult Run(Lib::ResultPtr&) override
         {
             if (!m_retried)
             {
@@ -63,7 +63,7 @@ namespace Tests {
             return std::chrono::seconds(0);
         }
 
-        Lib::TaskResult Run() { return Lib::TaskResult::SUCCESS; }
+        Lib::TaskResult Run(Lib::ResultPtr&) override { return Lib::TaskResult::SUCCESS; }
     };
 
 }  // namespace Tests

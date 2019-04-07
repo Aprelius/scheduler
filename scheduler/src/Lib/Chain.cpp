@@ -44,7 +44,7 @@ bool Scheduler::Lib::Chain::IsChild(const UUID& id) const
     return false;
 }
 
-Scheduler::Lib::TaskResult Scheduler::Lib::Chain::Run()
+Scheduler::Lib::TaskResult Scheduler::Lib::Chain::Run(ResultPtr& result)
 {
     /// This should return the state of the chain, SUCCESS or FAILURE.
     return TaskResult::SUCCESS;

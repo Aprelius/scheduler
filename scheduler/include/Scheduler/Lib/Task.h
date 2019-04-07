@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Scheduler/Common/Clock.h>
+#include <Scheduler/Lib/Result.h>
 #include <Scheduler/Lib/UUID.h>
 #include <condition_variable>
 #include <iosfwd>
@@ -167,12 +168,12 @@ namespace Lib {
         /// are no time boundaries associated with this task by default
         /// however the parameters maye be appended and passed to the Task
         /// constructor.
-        template<typename Callable, typename ...Args,
-            typename = decltype(std::declval<Callable&>())>
-        static TaskTypePtr<Task> Create(Callable&& cb, Args&& ...args)
+        template<typename CallbackFn, typename ...Args,
+            typename = decltype(std::declval<CallbackFn&>())>
+        static TaskTypePtr<Task> Create(CallbackFn&& cb, Args&& ...args)
         {
-            return std::shared_ptr<Task::Impl<Task, Callable>>(
-                new Task::Impl<Task, Callable>(
+            return std::shared_ptr<Task::Impl<Task, CallbackFn>>(
+                new Task::Impl<Task, CallbackFn>(
                     std::move(cb),
                     std::forward<Args>(args)...));
         }
@@ -287,7 +288,7 @@ namespace Lib {
 
         virtual void Fail();
 
-        virtual TaskResult Run() { return TaskResult::FAILURE; };
+        virtual TaskResult Run(ResultPtr&) = 0;
 
         void SetValid(bool status);
 
@@ -311,17 +312,59 @@ namespace Lib {
             TaskState state,
             std::unique_lock<std::mutex>& lock);
 
-        template<typename Base, typename Callable,
-            typename CallableType = decltype(std::declval<Callable&>()),
-            typename ResultType = typename std::result_of<CallableType()>::type>
+        template<typename T, typename>
+        struct TaskCb {};
+
+        template<typename T>
+        struct TaskCb<T, void>
+        {
+            typedef void type;
+            static constexpr bool value = true;
+        };
+
+        template<typename T>
+        struct TaskCb<T, bool>
+        {
+            typedef bool type;
+            static constexpr bool value = true;
+        };
+
+        template<typename T>
+        struct TaskCb<T, TaskResult>
+        {
+            typedef TaskResult type;
+            static constexpr bool value = true;
+        };
+
+        template<typename Fn, typename ...Args>
+        using FnResultType = typename std::result_of<Fn(Args...)>::type;
+
+        template<typename Fn, typename = void>
+        struct ValidCallback : std::false_type { };
+
+        template<typename Fn>
+        struct ValidCallback<Fn, typename std::enable_if<TaskCb<Fn, FnResultType<Fn, ResultPtr&>>::value>::type> : std::true_type
+        {
+            typedef FnResultType<Fn, ResultPtr&> ResultType;
+        };
+
+        template<typename Base, typename Callable>
         class Impl : public Base
         {
+            typedef typename ValidCallback<Callable>::ResultType ResultType;
+
+            static_assert(
+                std::is_same<typename TaskCb<Callable, ResultType>::type, void>::value
+                || std::is_same<typename TaskCb<Callable, ResultType>::type, bool>::value
+                || std::is_same<typename TaskCb<Callable, ResultType>::type, TaskResult>::value,
+                "TaskCb::type is not allowed");
+
             static_assert(std::is_move_constructible<Callable>::value,
                 "Callable must be move-constructible");
-            static_assert(std::is_same<ResultType, TaskResult>::value
-                || std::is_same<ResultType, void>::value
-                || std::is_same<ResultType, bool>::value,
+            static_assert(TaskCb<Callable, ResultType>::value,
                 "Callable return type must be a TaskResult value or void-type");
+            static_assert(ValidCallback<Callable>::value,
+                "Invalid callable object");
         public:
             template<typename ...Args>
             Impl(Callable&& cb, Args&& ...args)
@@ -329,19 +372,23 @@ namespace Lib {
                   m_callback(std::move(cb)) { }
             ~Impl() { }
 
-            TaskResult Run() final override { return _Run(static_cast<ResultType*>(nullptr)); }
+            TaskResult Run(ResultPtr& result) override { return _Run(static_cast<ResultType*>(nullptr), result); }
 
         private:
 
-            TaskResult _Run(bool*)
+            TaskResult _Run(bool*, ResultPtr& result)
             {
-                if (m_callback()) return TaskResult::SUCCESS;
+                if (m_callback(result)) return TaskResult::SUCCESS;
                 return TaskResult::FAILURE;
             }
 
-            TaskResult _Run(void*) { m_callback(); return TaskResult::SUCCESS; }
+            TaskResult _Run(void*, ResultPtr& result)
+            {
+                m_callback(result);
+                return TaskResult::SUCCESS;
+            }
 
-            TaskResult _Run(TaskResult*) { return m_callback(); }
+            TaskResult _Run(TaskResult*, ResultPtr& result) { return m_callback(result); }
 
             Callable m_callback;
             bool m_called = false;

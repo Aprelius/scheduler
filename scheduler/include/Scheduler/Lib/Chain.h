@@ -110,7 +110,7 @@ namespace Lib {
             }, std::forward<Args>(args)...);
         }
 
-        TaskResult Run();
+        TaskResult Run(ResultPtr&) override;
 
     private:
         std::vector<TaskPtr> m_children;

@@ -38,7 +38,8 @@ void Scheduler::Lib::TaskRunner::Run()
     else m_task->SetState(TaskState::ACTIVE);
 
     Clock::time_point start = Clock::now();
-    TaskResult result = m_task->Run();
+    ResultPtr resultPtr;
+    TaskResult result = m_task->Run(resultPtr);
     Clock::time_point stop = Clock::now();
 
     int64_t length = std::chrono::duration_cast<

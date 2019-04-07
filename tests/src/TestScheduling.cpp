@@ -342,13 +342,13 @@ TEST(Scheduler, TasksWithLambdas)
     scheduler->Start();
 
     int value = 0;
-    TaskPtr taskA = Task::Create([&]() {
+    TaskPtr taskA = Task::Create([&](ResultPtr&) {
         value = 2;
     });
 
     ASSERT_TRUE(taskA->IsValid());
 
-    TaskPtr taskB = Task::Create([&]() -> TaskResult {
+    TaskPtr taskB = Task::Create([&](ResultPtr&) -> TaskResult {
         value *= 2;
         return TaskResult::SUCCESS;
     });
@@ -357,7 +357,7 @@ TEST(Scheduler, TasksWithLambdas)
     taskB->Requires(taskA);
     ASSERT_TRUE(taskB->Depends(taskA));
 
-    TaskPtr taskC = Task::Create([&]() -> bool {
+    TaskPtr taskC = Task::Create([&](ResultPtr&) -> bool {
         value /= 4;
         return true;
     });
