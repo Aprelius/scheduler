@@ -4,3 +4,6 @@
 [submodule "contrib/template-utils"]
 	path = contrib/template-utils
 	url = git@github.com:Aprelius/template-utils.git
+[submodule "cmake"]
+	path = cmake
+	url = git@github.com:Aprelius/fusion-cmake.git
